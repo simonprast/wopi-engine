@@ -1,0 +1,31 @@
+{
+  "fields": [
+    {
+      "field_name": "kfz_ps",
+      "field_title": "Auto PS",
+      "field_type": "number"
+    },
+    {
+      "field_name": "kfz_brand",
+      "field_title": "Automarke",
+      "field_type": "string",
+      "field_detail": {
+        "max": "30"
+      }
+    },
+    {
+      "field_name": "kfz_birthdate",
+      "field_title": "Alter des Fahrzeuginhabers",
+      "field_type": "integer"
+    },
+    {
+      "field_name": "kfz_bm",
+      "field_title": "BM-Stufe",
+      "field_type": "integer",
+      "field_detail": {
+        "min": 1,
+        "max": 9
+      }
+    }
+  ]
+}
