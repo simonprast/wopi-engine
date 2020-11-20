@@ -12,10 +12,9 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from . import api_views
 
 urlpatterns = [
-    path('users/', api_views.UserList.as_view()),
-    path('users/<int:pk>/', api_views.UserDetail.as_view()),
-    path('users/create/', api_views.UserCreateOrLogin.as_view()),
-    path('users/login/', api_views.UserCreateOrLogin.as_view()),
+    path('', api_views.UserList.as_view()),
+    path('<int:pk>/', api_views.UserDetail.as_view()),
+    path('create/', api_views.UserCreateOrLogin.as_view()),
 
     # Todo:
     # https://stackoverflow.com/questions/14567586/token-authentication-for-restful-api-should-the-token-be-periodically-changed
