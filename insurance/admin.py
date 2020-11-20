@@ -30,21 +30,21 @@ class InsuranceAdmin(admin.ModelAdmin):
     form = InsuranceChangeForm
     add_form = InsuranceCreationForm
 
-    list_display = ("insurance_name",)
+    list_display = ("insurance_name", "insurance_key")
     list_filter = ()
     fieldsets = (
-        (None, {"fields": ("insurance_name", "insurance_subtitle")}),
+        (None, {"fields": ("insurance_name", "insurance_key", "insurance_subtitle")}),
         ("Fields", {"fields": ("insurance_fields",)}),
     )
 
     add_fieldsets = (
         (None, {
             "classes": ("wide",),
-            "fields": ("insurance_name", "insurance_subtitle", "insurance_fields")}
+            "fields": ("insurance_name", "insurance_key", "insurance_subtitle", "insurance_fields")}
          ),
     )
-    search_fields = ("insurance_name",)
-    ordering = ("insurance_name",)
+    search_fields = ("insurance_name", "insurance_key")
+    ordering = ("insurance_name", "insurance_key")
     filter_horizontal = ()
 
 
