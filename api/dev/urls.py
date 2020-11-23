@@ -9,6 +9,7 @@ from django.urls import path, include
 
 
 urlpatterns = [
+    # This URLs file is routing the requests to each module's own URLs file
     path('users/', include('user.api.dev.urls')),
     path('submit/', include('submission.api.dev.urls'))
 ]

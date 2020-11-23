@@ -10,7 +10,7 @@ from django.conf import settings
 from rest_framework import exceptions, generics, mixins, permissions, status
 from rest_framework.response import Response
 
-from .authentication import obtain_auth_token, refresh_token, remove_token
+from user.authentication import obtain_auth_token, refresh_token, remove_token
 
 from user.models import User
 from .serializers import UserSerializer, RegisterUserSerializer
@@ -56,11 +56,13 @@ class UserCreateOrLogin(generics.GenericAPIView):
             )
         else:
             serializer = RegisterUserSerializer(data=request.data)
+            user_created = False
 
             if settings.ALLOW_REGISTER:
                 if serializer.is_valid():
-                    # Creates the user using create_user()
-                    serializer.save()
+                    # Creates the user using User.objects.create_user()
+                    # This returns True in case the User object is succesfully created
+                    user_created = serializer.save()
 
             # Authenticate the newly created user
             # OR authenticate the existing user with given username and password combination.
@@ -69,7 +71,7 @@ class UserCreateOrLogin(generics.GenericAPIView):
                 request.data.__getitem__('password')
             )
 
-            # If a user with given username does already exist but the username password
+            # If a user with given username does already exist but the username-password
             # combination is wrong, 'token', 'created' and 'user' will be set to 'None'.
             # In this case, this error response is thrown.
             if not token:
@@ -82,11 +84,15 @@ class UserCreateOrLogin(generics.GenericAPIView):
                 return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
             # Either the user object was created or the user just logged in
-            auth_status = status.HTTP_201_CREATED if created else status.HTTP_200_OK
+            auth_status = status.HTTP_201_CREATED if user_created or created else status.HTTP_200_OK
 
             # Attach a 'created' confirmation to the return dictionary if the object was just created
-            return_dict = {'username': user.username, 'token': token.key, 'created': 'False'} if not created else {
-                'username': user.username, 'token': token.key, 'created': 'True'}
+            return_dict = {
+                'username': user.username,
+                'token': token.key,
+                'token_created': created,
+                'user_created': user_created
+            }
 
             return Response(return_dict, status=auth_status)
 

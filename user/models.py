@@ -58,9 +58,6 @@ class User(AbstractBaseUser):
     def __str__(self):
         return self.username
 
-    def save(self, *args, **kwargs):
-        super(User, self).save(*args, **kwargs)
-
     def has_perm(self, perm, obj=None):
         "Does the user have a specific permission?"
         # Simplest possible answer: Yes, always
@@ -81,14 +78,18 @@ class User(AbstractBaseUser):
         # Simplest possible answer: All admins are staff
         return self.is_admin
 
-    # def save(self, *args, **kwargs):
-    #     super(User, self).save(*args, **kwargs)
-
 
 def create_admin_user():
+    # This is called within the root URLs file at francy.urls, because, at this point, all modules / the user module is
+    # already loaded. This function ensures that a default administrative user account exists.
+    # Username and password are set according to environment variables ADMIN_USER and ADMIN_PASSWORD.
+    # CAUTION! When changing ADMIN_USER at runtime, the old ADMIN_USER account is not automatically deleted.
+
     if User.objects.filter(username=settings.ADMIN_USER).exists():
-        User.objects.get(username=settings.ADMIN_USER).set_password(settings.ADMIN_PASSWORD)
+        User.objects.get(username=settings.ADMIN_USER) \
+            .set_password(settings.ADMIN_PASSWORD)
         print("EXISTING ADMIN ACCOUNT (SET ADMIN PASSWORD): " + settings.ADMIN_USER)
     else:
-        User.objects.create_superuser(settings.ADMIN_USER, settings.ADMIN_PASSWORD)
+        User.objects.create_superuser(
+            settings.ADMIN_USER, settings.ADMIN_PASSWORD)
         print("CREATE NEW ADMIN ACCOUNT: " + settings.ADMIN_USER)

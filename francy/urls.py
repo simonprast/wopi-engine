@@ -32,20 +32,19 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # REST API
-    # This is used for BasicAuthentication using the web interface when debugging.
-    # path('api-auth/', include('rest_framework.urls')),
-    # Use users/create/ to authenticate
 
     # API versioning
     path('api/version', main_api_views.show_version),
     # Development version /api/dev/
     # Include all modules using API endpoints through the API module, not directly through the root URLs file.
     path('api/dev/', include('api.dev.urls')),
+
     # Please stick to the Semantic Versioning guidlines (semver.org) as good as possible.
     # Given a version number MAJOR.MINOR.PATCH, increment the:
-    # MAJOR version when you make incompatible API changes,
-    # MINOR version when you add functionality in a backwards compatible manner, and
-    # PATCH version when you make backwards compatible bug fixes.
+    # - MAJOR version when you make incompatible API changes,
+    # - MINOR version when you add functionality in a backwards compatible manner, and
+    # - PATCH version when you make backwards compatible bug fixes.
+
     # path('api/v1/', include('user.api.v1.urls')),
 ]
 

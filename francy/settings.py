@@ -40,6 +40,7 @@ ALLOW_REGISTER = True
 ADMIN_USER = 'admin'
 ADMIN_PASSWORD = 'admin'
 
+# LTS API version
 VERSION = '0.1.0'
 
 

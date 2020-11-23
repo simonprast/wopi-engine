@@ -29,3 +29,5 @@ class RegisterUserSerializer(serializers.ModelSerializer):
             email=self.validated_data.get('email'),
             password=self.validated_data.get('password')
         )
+
+        return True

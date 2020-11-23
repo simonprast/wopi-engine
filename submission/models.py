@@ -13,8 +13,10 @@ from insurance.models import Insurance
 
 class SubmissionManager(models.Manager):
     def create_submission(self, insurance_key, submitter, data):
+        # Need to get the Insurance object in order to create the Submission object with the relation
         insurance = Insurance.objects.get(insurance_key=insurance_key)
 
+        # self.check_submission returns False in case the exact same submission already exists
         if not self.check_submission(insurance=insurance, submitter=submitter, data=data):
             return 'DuplicateError'
 
@@ -48,11 +50,10 @@ class Submission(models.Model):
 
     REQUIRED_FIELDS = []
 
+    # When showing the name of a submission, return this instead of 'Submission object'
     def __str__(self):
+        # Checking for this, as the submission_insurance field can also be None when deleting an insurance
         if self.submission_insurance:
             return 'Anfrage zu ' + self.submission_insurance.insurance_name + ' von ' + self.submission_submitter
         else:
             return 'Anfrage von ' + self.submission_submitter
-
-    # def save(self, *args, **kwargs):
-    #     super(User, self).save(*args, **kwargs)

@@ -10,12 +10,14 @@ from rest_framework.authtoken.serializers import AuthTokenSerializer
 
 
 def obtain_auth_token(username, password):
+    # Try to authenticate given credentials using the AuthTokenSerializer
     serializer_auth = AuthTokenSerializer(
         data={'username': username, 'password': password})
     if serializer_auth.is_valid():
         user = serializer_auth.validated_data['user']
         token, created = Token.objects.get_or_create(user=user)
         return token, created, user
+    # If authentication fails, 'token', 'created' and 'user' will all be None
     return None, None, None
 
 

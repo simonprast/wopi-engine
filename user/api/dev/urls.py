@@ -12,8 +12,11 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from . import api_views
 
 urlpatterns = [
+    # GET a list of users
     path('', api_views.UserList.as_view()),
+    # GET, or PUT a specific user by its id
     path('<int:pk>/', api_views.UserDetail.as_view()),
+    # CREATE a new user or also authenticate an existing user
     path('create/', api_views.UserCreateOrLogin.as_view()),
 
     # Todo:

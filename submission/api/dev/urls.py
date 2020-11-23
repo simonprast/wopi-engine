@@ -11,6 +11,7 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from . import api_views
 
 urlpatterns = [
+    # POST endpoint for basic submissions
     path('', api_views.Submit.as_view()),
 ]
 
