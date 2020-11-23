@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'user',
     'design',
     'insurance',
+    'submission',
 
     # REST API
     'rest_framework',
