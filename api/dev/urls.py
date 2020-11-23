@@ -10,4 +10,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path('users/', include('user.api.dev.urls')),
+    path('submit/', include('submission.api.dev.urls'))
 ]
