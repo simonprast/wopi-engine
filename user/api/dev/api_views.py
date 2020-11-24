@@ -86,7 +86,7 @@ class UserCreateOrLogin(generics.GenericAPIView):
             # Either the user object was created or the user just logged in
             auth_status = status.HTTP_201_CREATED if user_created or created else status.HTTP_200_OK
 
-            # Attach a 'created' confirmation to the return dictionary if the object was just created
+            # Attach a 'created' confirmation to the return dictionary if one of the objects was just created
             return_dict = {
                 'username': user.username,
                 'token': token.key,
