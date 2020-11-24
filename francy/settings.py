@@ -53,6 +53,9 @@ INSTALLED_APPS = [
     'insurance',
     'submission',
 
+    # For validating phone numbers
+    'phonenumbers',
+
     # REST API
     'rest_framework',
     'rest_framework.authtoken',

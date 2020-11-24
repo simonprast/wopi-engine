@@ -4,6 +4,9 @@
 # Copyright (c) 2020 - Simon Prast
 #
 
+
+import phonenumbers
+
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
 from django.db import models
@@ -48,6 +51,16 @@ class User(AbstractBaseUser):
     utype = models.IntegerField(verbose_name="User Type", default=0)
     is_admin = models.BooleanField(default=False)
 
+    first_name = models.CharField(max_length=128, null=True)
+    last_name = models.CharField(max_length=128, null=True)
+    # customer_id = models.CharField(max_length=128, null=True)
+
+    # Contact info
+    phone = models.CharField(max_length=15, null=True)
+
+    # ID verification
+    verified = models.BooleanField(default=False)
+
     objects = UserManager()
 
     USERNAME_FIELD = "username"
@@ -56,7 +69,12 @@ class User(AbstractBaseUser):
     REQUIRED_FIELDS = []
 
     def __str__(self):
-        return self.username
+        string = ''
+        string += self.first_name + ' ' if self.first_name else ''
+        string += self.last_name if self.last_name else ''
+        if string == '':
+            string = self.username
+        return string
 
     def has_perm(self, perm, obj=None):
         "Does the user have a specific permission?"
@@ -93,3 +111,17 @@ def create_admin_user():
         User.objects.create_superuser(
             settings.ADMIN_USER, settings.ADMIN_PASSWORD)
         print("CREATE NEW ADMIN ACCOUNT: " + settings.ADMIN_USER)
+
+
+def check_phone_number(number):
+    # Try to parse the phone number string, if this is not possible it will return False
+    try:
+        n = phonenumbers.parse(number, 'AT')
+    except phonenumbers.phonenumberutil.NumberParseException:
+        return False
+
+    if not phonenumbers.is_valid_number(n):
+        return False
+
+    # e.g. +436641234567
+    return '+' + str(n.country_code) + str(n.national_number)
