@@ -21,6 +21,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.db.utils import OperationalError
 from django.urls import path, include
 # from django.views.decorators.csrf import csrf_exempt
 
@@ -48,5 +49,7 @@ urlpatterns = [
     # path('api/v1/', include('user.api.v1.urls')),
 ]
 
-
-create_admin_user()
+try:
+    create_admin_user()
+except OperationalError:
+    print('COULD NOT CREATE ADMIN USER (is there an un-migrated field on the user model?)')
