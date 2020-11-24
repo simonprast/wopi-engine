@@ -4,13 +4,12 @@
 # Copyright (c) 2020 - Simon Prast
 #
 
-# from django.conf import settings
+
 from django.db import models
 
 
 class InsuranceManager(models.Manager):
-    # def create_insurance(self, insurance_name, insurance_subtitle, insurance_fields):
-    #     pass
+    # This can be used in the future to dynamically create new insurances through the API
     pass
 
 
@@ -35,14 +34,12 @@ class Insurance(models.Model):
     #   }
     # ]
     #
-    # .. where field_detail and its arguments are optional.
+    # 'required', 'field_detail' and its arguments ('min', 'max') are optional
 
     objects = InsuranceManager()
 
     REQUIRED_FIELDS = []
 
+    # When showing the short name of an insurance, return the insurance name instead of 'Insurance object'
     def __str__(self):
         return self.insurance_name
-
-    # def save(self, *args, **kwargs):
-    #     super(User, self).save(*args, **kwargs)

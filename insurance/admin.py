@@ -12,21 +12,21 @@ from .models import Insurance
 
 
 class InsuranceCreationForm(forms.ModelForm):
-    # A form for creating new insurances.
+    # Include all insurance fields at the creation form.
     class Meta:
         model = Insurance
         exclude = ()
 
 
 class InsuranceChangeForm(forms.ModelForm):
-    # A form for updating insurances.
+    # Include all insurance fields at the change form.
     class Meta:
         model = Insurance
         exclude = ()
 
 
 class InsuranceAdmin(admin.ModelAdmin):
-    # The forms to add and change insurances
+    #  Define the InsuranceAdmin panel
     form = InsuranceChangeForm
     add_form = InsuranceCreationForm
 
