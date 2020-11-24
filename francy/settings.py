@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     # Custom apps
     'user',
     'design',
+    'insurance',
 
     # REST API
     'rest_framework',

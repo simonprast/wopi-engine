@@ -9,5 +9,5 @@ from django.urls import path, include
 
 
 urlpatterns = [
-    path('', include('user.api.dev.urls')),
+    path('users/', include('user.api.dev.urls')),
 ]
