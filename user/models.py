@@ -13,21 +13,52 @@ from django.db import models
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, username, password, **kwargs):
-        email_raw = kwargs.get("email", None)
+    def create_user(
+        self,
+        username=None,
+        email=None,
+        first_name=None,
+        last_name=None,
+        phone=None,
+        password=None,
+        **kwargs
+    ):
+
+        serializers = kwargs.get('serializers', None)
         email = self.normalize_email(
-            email_raw) if email_raw is not None else None
+            email) if email is not None else None
         utype = kwargs.get("utype", 1)
         # is_staff = kwargs.get("is_staff", False)
+
+        if User.objects.filter(email=email).count() > 0:
+            if serializers:
+                return False
+                # raise serializers.ValidationError(
+                #     {'DuplicateEmail': ['User with this E-Mail already exists.']})
+            else:
+                raise ValueError('User with this E-Mail already exists.')
 
         if not username:
             raise ValueError("Users must have an username")
 
+        validated_phone = None
+        if phone:
+            phone_number = check_phone_number(phone)
+            if not phone_number:
+                raise ValueError("Phone number is not valid")
+            else:
+                validated_phone = phone_number
+
         user = self.model(
             username=username,
+            first_name=first_name,
+            last_name=last_name,
             email=email,
+            phone=validated_phone,
             utype=utype,
         )
+
+        print(password)
 
         user.set_password(password)
         user.save(using=self._db)
