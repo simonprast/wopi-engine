@@ -9,6 +9,8 @@ from rest_framework import serializers
 
 from user.models import User
 
+from user.create_or_login import validated_user_data
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -16,18 +18,22 @@ class UserSerializer(serializers.ModelSerializer):
         exclude = ['password', 'is_admin']
 
 
-class RegisterUserSerializer(serializers.ModelSerializer):
-    # password = serializers.CharField()
+class RegisterUserSerializer(serializers.Serializer):
+    first_name, last_name, email, phone, password = None, None, None, None, None
 
-    class Meta:
-        model = User
-        fields = ['id', 'username', 'email', 'password']
+    def validate(self, value):
+        self.first_name, self.last_name, self.email, self.phone, self.password = validated_user_data(
+            self.initial_data)
+        return value
 
     def save(self):
-        User.objects.create_user(
-            username=self.validated_data.get('username'),
-            email=self.validated_data.get('email'),
-            password=self.validated_data.get('password')
+        user = User.objects.create_user(
+            first_name=self.first_name,
+            last_name=self.last_name,
+            email=self.email,
+            phone=self.phone,
+            password=self.password,
+            serializers=serializers
         )
 
-        return True
+        return True if user else False
