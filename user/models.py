@@ -28,7 +28,6 @@ class UserManager(BaseUserManager):
         email = self.normalize_email(
             email) if email is not None else None
         utype = kwargs.get("utype", 1)
-        # is_staff = kwargs.get("is_staff", False)
 
         if User.objects.filter(email=email).count() > 0:
             if serializers:
@@ -38,8 +37,11 @@ class UserManager(BaseUserManager):
             else:
                 raise ValueError('User with this E-Mail already exists.')
 
+        if not email:
+            raise ValueError('User must have set an E-Mail')
+
         if not username:
-            raise ValueError("Users must have an username")
+            username = email
 
         validated_phone = None
         if phone:
@@ -58,18 +60,24 @@ class UserManager(BaseUserManager):
             utype=utype,
         )
 
-        print(password)
-
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username, password=None):
+    def create_superuser(
+        self,
+        username=None,
+        email=None,
+        password=None
+    ):
+
         user = self.create_user(
             username=username,
             password=password,
+            email=email,
             utype=9
         )
+
         user.is_admin = True
         user.save(using=self._db)
         return user
@@ -78,7 +86,7 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser):
     username = models.CharField(max_length=40, unique=True)
     email = models.EmailField(
-        verbose_name="Email Address", null=True, max_length=320, unique=True)
+        verbose_name="Email Address", max_length=320, unique=True)
     utype = models.IntegerField(verbose_name="User Type", default=0)
     is_admin = models.BooleanField(default=False)
 
@@ -94,7 +102,7 @@ class User(AbstractBaseUser):
 
     objects = UserManager()
 
-    USERNAME_FIELD = "username"
+    USERNAME_FIELD = "email"
     EMAIL_FIELD = "email"
 
     REQUIRED_FIELDS = []
