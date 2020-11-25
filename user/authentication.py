@@ -11,6 +11,7 @@ from rest_framework.authtoken.serializers import AuthTokenSerializer
 
 def obtain_auth_token(username, password):
     # Try to authenticate given credentials using the AuthTokenSerializer
+    # 'username' takes the User model's username field
     serializer_auth = AuthTokenSerializer(
         data={'username': username, 'password': password})
     if serializer_auth.is_valid():
