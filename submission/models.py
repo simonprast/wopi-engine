@@ -9,6 +9,7 @@
 from django.db import models
 
 from insurance.models import Insurance
+from user.models import User
 
 
 class SubmissionManager(models.Manager):
@@ -42,8 +43,11 @@ class SubmissionManager(models.Manager):
 
 class Submission(models.Model):
     submission_insurance = models.ForeignKey(
-        Insurance, on_delete=models.SET_NULL, blank=True, null=True)
-    submission_submitter = models.CharField(max_length=128, blank=True)
+        Insurance, on_delete=models.SET_NULL, blank=True, null=True
+    )
+    submission_submitter = models.ForeignKey(
+        User, on_delete=models.SET_NULL, blank=True, null=True
+    )
     submission_data = models.TextField()
 
     objects = SubmissionManager()
@@ -54,6 +58,6 @@ class Submission(models.Model):
     def __str__(self):
         # Checking for this, as the submission_insurance field can also be None when deleting an insurance
         if self.submission_insurance:
-            return 'Anfrage zu ' + self.submission_insurance.insurance_name + ' von ' + self.submission_submitter
+            return 'Anfrage zu ' + str(self.submission_insurance) + ' von ' + str(self.submission_submitter)
         else:
-            return 'Anfrage von ' + self.submission_submitter
+            return 'Anfrage von ' + str(self.submission_submitter)
