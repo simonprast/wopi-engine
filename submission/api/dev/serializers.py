@@ -9,13 +9,110 @@ import json
 
 from datetime import datetime
 
+from django.contrib.auth.password_validation import validate_password
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+
 from rest_framework import serializers
 
-from submission.models import Submission
 from insurance.models import Insurance
+from submission.models import Submission
+from user.models import User, check_phone_number
 
 
-def field_validation(data, initial_data):
+def user_validation(initial_data):
+    first_name, last_name, email, phone, password = None, None, None, None, None
+
+    # Dict of field errors
+    errors = {}
+
+    # fields = [
+    #     {
+    #         'field_name': 'first_name',
+    #         'field_title': 'Vorname',
+    #         'field_type': 'string'
+    #     },
+    #     {
+    #         'field_name': 'last_name',
+    #         'field_title': 'Nachname',
+    #         'field_type': 'string'
+    #     },
+    #     {
+    #         'field_name': 'email',
+    #         'field_title': 'E-Mail Adresse',
+    #         'field_type': 'email',
+    #     },
+    #     {
+    #         'field_name': 'phone',
+    #         'field_title': 'Telefonnummer',
+    #         'field_type': 'phone',
+    #     },
+    # ]
+
+    # initial_data contains the POST request's data
+    # Check if the field's key is in the POST body
+    names = ['first_name', 'last_name']
+    for name in names:
+        if name in initial_data:
+            content = initial_data[name]
+
+            if content == '':
+                errors.update(
+                    {name: ['This field may not be blank.']})
+            elif len(content) > User._meta.get_field('first_name').max_length:
+                errors.update(
+                    {name: ['Text must be at most ' + str(User._meta.get_field('first_name').max_length) +
+                            ' characters long. Length: ' + str(len(content))]})
+            else:
+                if name == 'first_name':
+                    first_name = content
+                elif name == 'last_name':
+                    last_name = content
+        else:
+            errors.update(
+                {name: ['This field is required.']})
+
+    if 'email' in initial_data:
+        email_to_validate = initial_data['email']
+        try:
+            validate_email(email_to_validate)
+            email = email_to_validate
+        except ValidationError:
+            errors.update(
+                {'email': ['This seems to be not a valid email.']})
+    else:
+        errors.update(
+            {'email': ['This field is required.']})
+
+    if 'phone' in initial_data:
+        phone_number = check_phone_number(initial_data['phone'])
+        if not phone_number:
+            errors.update(
+                {'phone': ['Invalid number.']})
+        else:
+            phone = phone_number
+
+    if 'password' in initial_data:
+        password_to_validate = initial_data['password']
+        try:
+            validate_password(password_to_validate)
+            password = password_to_validate
+        except ValidationError:
+            errors.update(
+                {'password': ['Given password does not match the requirements. '
+                              '(Min-length 8, alphanumeric, not common and not similar to user data)']})
+    else:
+        errors.update(
+            {'password': ['This field is required.']})
+
+    # If any errors are in the error dictionary, raise those errors
+    if errors:
+        raise serializers.ValidationError(errors)
+
+    return first_name, last_name, email, phone, password
+
+
+def field_validation(initial_data):
     # Get the insurance object's fields through the given 'key'
     key = initial_data['key']
     validate_key(value=key)
@@ -76,12 +173,12 @@ def field_validation(data, initial_data):
             if f_type == 'string':
                 if f_min:
                     if len(content) < f_min:
-                        errors.update({f_key: ['String must be at least ' + f_min + 'characters long. Length: '
-                                               + len(content)]})
+                        errors.update({f_key: ['String must be at least ' + str(f_min) + ' characters long. Length: '
+                                               + str(len(content))]})
                 if f_max:
                     if len(content) > f_max:
-                        errors.update({f_key: ['String must be at most ' + f_max + 'characters long. Length: '
-                                               + len(content)]})
+                        errors.update({f_key: ['String must be at most ' + str(f_max) + ' characters long. Length: '
+                                               + str(len(content))]})
 
             # 'integer' must be an integer, who would have thought? ;)
             # 'min' and 'max' determine the minimum or maximum value of the number
@@ -129,7 +226,7 @@ def field_validation(data, initial_data):
             elif f_type == 'text':
                 if len(content) > 1500:
                     errors.update(
-                        {f_key: ['Text must be at most ' + f_max + 'characters long. Length: ' + len(content)]})
+                        {f_key: ['Text must be at most 1500 characters long. Length: ' + str(len(content))]})
 
             # Birthdate must be a string in the format of DD-MM-YYYY
             elif f_type == 'birthdate':
@@ -160,7 +257,7 @@ def field_validation(data, initial_data):
     if errors:
         raise serializers.ValidationError(errors)
 
-    return data
+    return True
 
 
 def validate_key(value):
@@ -202,22 +299,66 @@ def create_data(initial_data):
 
 class SubmitSerializer(serializers.Serializer):
     key = serializers.CharField(max_length=30)
-    submitter = serializers.CharField(max_length=128)
-    data = serializers.CharField(required=False)
 
     def validate(self, data):
         # If any error happens within field_validation, a ValidationError will be raised
-        field_validation(data, self.initial_data)
+        field_validation(self.initial_data)
         return data
 
-    def save(self):
+    def save(self, user):
         # Create the data JSON string using the insurance's fields and the
         # content for Submission.submission_data using create_data().
         processed_data = create_data(self.initial_data)
 
         submission = Submission.objects.create_submission(
             insurance_key=self.validated_data.get('key'),
-            submitter=self.validated_data.get('submitter'),
+            submitter=user,
+            data=processed_data
+        )
+
+        return submission
+
+
+class RegisterSubmitSerializer(serializers.Serializer):
+    key = serializers.CharField(max_length=30)
+
+    first_name, last_name, email, phone, password = None, None, None, None, None
+
+    def validate(self, data):
+        # If any error happens within field_validation, a ValidationError will be raised
+        field_validation(self.initial_data)
+        # Through this, it is ensured that all insurance-related fields are valid
+        # Further, ensure that the user-related fields are valid
+        self.first_name, self.last_name, self.email, self.phone, self.password = user_validation(
+            self.initial_data)
+        return data
+
+    def save(self):
+        # First, create a user object using the submission data
+        submitter = User.objects.create_user(
+            username=self.email,
+            first_name=self.first_name,
+            last_name=self.last_name,
+            email=self.email,
+            phone=self.phone,
+            password=self.password,
+            serializers=serializers
+        )
+
+        if not submitter:
+            raise serializers.ValidationError(
+                {'DuplicateEmail': ['User with this E-Mail already exists.']})
+
+        # Todo: Use user authentication similar to user.api.dev (create_user)
+        # Error handling
+
+        # Create the data JSON string using the insurance's fields and the
+        # content for Submission.submission_data using create_data().
+        processed_data = create_data(self.initial_data)
+
+        submission = Submission.objects.create_submission(
+            insurance_key=self.validated_data.get('key'),
+            submitter=submitter,
             data=processed_data
         )
 

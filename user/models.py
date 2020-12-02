@@ -13,19 +13,50 @@ from django.db import models
 
 
 class UserManager(BaseUserManager):
-    def create_user(self, username, password, **kwargs):
-        email_raw = kwargs.get("email", None)
+    def create_user(
+        self,
+        username=None,
+        email=None,
+        first_name=None,
+        last_name=None,
+        phone=None,
+        password=None,
+        **kwargs
+    ):
+
+        serializers = kwargs.get('serializers', None)
         email = self.normalize_email(
-            email_raw) if email_raw is not None else None
+            email) if email is not None else None
         utype = kwargs.get("utype", 1)
-        # is_staff = kwargs.get("is_staff", False)
+
+        if User.objects.filter(email=email).count() > 0:
+            if serializers:
+                return False
+                # raise serializers.ValidationError(
+                #     {'DuplicateEmail': ['User with this E-Mail already exists.']})
+            else:
+                raise ValueError('User with this E-Mail already exists.')
+
+        if not email:
+            raise ValueError('User must have set an E-Mail')
 
         if not username:
-            raise ValueError("Users must have an username")
+            username = email
+
+        validated_phone = None
+        if phone:
+            phone_number = check_phone_number(phone)
+            if not phone_number:
+                raise ValueError("Phone number is not valid")
+            else:
+                validated_phone = phone_number
 
         user = self.model(
             username=username,
+            first_name=first_name,
+            last_name=last_name,
             email=email,
+            phone=validated_phone,
             utype=utype,
         )
 
@@ -33,12 +64,20 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username, password=None):
+    def create_superuser(
+        self,
+        username=None,
+        email=None,
+        password=None
+    ):
+
         user = self.create_user(
             username=username,
             password=password,
+            email=email,
             utype=9
         )
+
         user.is_admin = True
         user.save(using=self._db)
         return user
@@ -47,7 +86,7 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser):
     username = models.CharField(max_length=40, unique=True)
     email = models.EmailField(
-        verbose_name="Email Address", null=True, max_length=320, unique=True)
+        verbose_name="Email Address", max_length=320, unique=True)
     utype = models.IntegerField(verbose_name="User Type", default=0)
     is_admin = models.BooleanField(default=False)
 
@@ -63,7 +102,7 @@ class User(AbstractBaseUser):
 
     objects = UserManager()
 
-    USERNAME_FIELD = "username"
+    USERNAME_FIELD = "email"
     EMAIL_FIELD = "email"
 
     REQUIRED_FIELDS = []
