@@ -3,3 +3,4 @@ djangorestframework
 markdown
 django-filter
 phonenumbers==8.12.13
+django-cors-headers

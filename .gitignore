@@ -11,6 +11,9 @@
 # Database files
 db.sqlite3
 
+# Media files
+media/*
+
 # Pycache
 __pycache__/
 *.pyc
