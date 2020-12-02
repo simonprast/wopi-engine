@@ -8,7 +8,7 @@
 from django import forms
 from django.contrib import admin
 
-from .models import Submission
+from .models import Submission, IDSubmission
 
 
 class SubmissionCreationForm(forms.ModelForm):
@@ -49,3 +49,44 @@ class SubmissionAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Submission, SubmissionAdmin)
+
+
+class IDSubmissionCreationForm(forms.ModelForm):
+    # A form for creating new id submission.
+    class Meta:
+        model = IDSubmission
+        exclude = ()
+
+
+class IDSubmissionChangeForm(forms.ModelForm):
+    # A form for updating id submission.
+    class Meta:
+        model = IDSubmission
+        exclude = ()
+
+
+class IDSubmissionAdmin(admin.ModelAdmin):
+    # The forms to add and change submission
+    form = IDSubmissionChangeForm
+    add_form = IDSubmissionCreationForm
+
+    list_display = ("id", "submission_submitter", "latest", "verified")
+    list_filter = ("submission_submitter", "latest", "verified")
+    fieldsets = (
+        (None, {"fields": ("submission_submitter",
+                           "submission_id", "latest", "verified")}),
+        # ("Data", {"fields": ("submission_data",)}),
+    )
+
+    add_fieldsets = (
+        (None, {
+            "classes": ("wide",),
+            "fields": ("submission_submitter", "submission_id", "verified")}
+         ),
+    )
+    search_fields = ("submission_submitter",)
+    ordering = ("id", "submission_submitter", "latest", "verified")
+    filter_horizontal = ()
+
+
+admin.site.register(IDSubmission, IDSubmissionAdmin)
