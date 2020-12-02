@@ -13,7 +13,7 @@ from user.authentication import refresh_token, remove_token
 
 from user.create_or_login import create_or_login
 from user.models import User
-from .serializers import UserSerializer, RegisterUserSerializer
+from .serializers import UserSerializer, RegisterUserSerializer, LoginUserSerializer
 
 
 class UserList(mixins.ListModelMixin,
@@ -56,8 +56,10 @@ class UserCreateOrLogin(generics.GenericAPIView):
             )
         else:
             serializer = RegisterUserSerializer(data=request.data)
+            logSerializer = LoginUserSerializer(data=request.data)
+            # Create and authenticate the user, in case the given request data is valid
             return_dict, auth_status, user = create_or_login(
-                serializer, request)
+                serializer, logSerializer, request)
             return Response(return_dict, status=auth_status)
 
 

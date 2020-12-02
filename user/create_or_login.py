@@ -17,17 +17,24 @@ from .authentication import obtain_auth_token
 from .models import User, check_phone_number
 
 
-def create_or_login(apiSerializer, request, validated=False):
-    serializer = apiSerializer
+def create_or_login(regSerializer, logSerializer, request, validated=False):
+    register_serializer = regSerializer
+    login_serializer = logSerializer
     user_created = False
 
     if settings.ALLOW_REGISTER:
         if not validated:
-            serializer.is_valid(raise_exception=True)
+            if not register_serializer.is_valid() and not login_serializer.is_valid():
+                raise serializers.ValidationError(
+                    register_serializer.errors)
 
-        # Creates the user using User.objects.create_user()
-        # This returns True in case the User object is succesfully created
-        user_created = serializer.save()
+            if register_serializer.is_valid():
+                # Creates the user using User.objects.create_user()
+                # This returns True in case the User object is succesfully created
+                user_created = register_serializer.save()
+            elif User.objects.filter(email=request.data.__getitem__('email')).count() == 0:
+                raise serializers.ValidationError(
+                    register_serializer.errors)
 
     # Authenticate the newly created user
     # OR authenticate the existing user with given username and password combination.

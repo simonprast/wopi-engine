@@ -15,13 +15,14 @@ from user.create_or_login import validated_user_data
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        exclude = ['password', 'is_admin']
+        exclude = ['password', 'is_admin', 'utype']
 
 
 class RegisterUserSerializer(serializers.Serializer):
     first_name, last_name, email, phone, password = None, None, None, None, None
 
     def validate(self, value):
+        # Ensure that the given user arguments are valid and set the values accordingly
         self.first_name, self.last_name, self.email, self.phone, self.password = validated_user_data(
             self.initial_data)
         return value
@@ -37,3 +38,8 @@ class RegisterUserSerializer(serializers.Serializer):
         )
 
         return True if user else False
+
+
+class LoginUserSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField()
