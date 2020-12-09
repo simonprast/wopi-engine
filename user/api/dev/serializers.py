@@ -15,7 +15,7 @@ from user.create_or_login import validated_user_data
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        exclude = ['password', 'is_admin', 'utype']
+        exclude = ['password', 'is_admin', ]
 
 
 class RegisterUserSerializer(serializers.Serializer):
@@ -43,3 +43,19 @@ class RegisterUserSerializer(serializers.Serializer):
 class LoginUserSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()
+
+
+class ChangeUserSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(required=False)
+    last_name = serializers.CharField(required=False)
+    email = serializers.CharField(required=False)
+    phone = serializers.CharField(required=False)
+
+    class Meta:
+        model = User
+        fields = [
+            'first_name',
+            'last_name',
+            'email',
+            'phone'
+        ]

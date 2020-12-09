@@ -12,7 +12,7 @@ from datetime import datetime
 from rest_framework import serializers
 
 from insurance.models import Insurance
-from submission.models import Submission, IDSubmission
+from submission.insurancesubmission.models import InsuranceSubmission
 
 
 def field_validation(initial_data):
@@ -200,7 +200,7 @@ def create_data(initial_data):
     return data
 
 
-class SubmitSerializer(serializers.Serializer):
+class InsuranceSubmissionSerializer(serializers.Serializer):
     key = serializers.CharField(max_length=30)
 
     def validate(self, data):
@@ -210,29 +210,13 @@ class SubmitSerializer(serializers.Serializer):
 
     def save(self, user):
         # Create the data JSON string using the insurance's fields and the
-        # content for Submission.submission_data using create_data().
+        # content for InsuranceSubmission.data using create_data().
         processed_data = create_data(self.initial_data)
 
-        submission = Submission.objects.create_submission(
+        in_submission = InsuranceSubmission.objects.create_submission(
             insurance_key=self.validated_data.get('key'),
             submitter=user,
             data=processed_data
         )
 
-        return submission
-
-
-class SubmitIDSerializer(serializers.Serializer):
-    id = serializers.IntegerField(required=False)
-    submission_submitter = serializers.CharField(required=False)
-    submission_id = serializers.ImageField()
-    verified = serializers.BooleanField(required=False)
-    latest = serializers.BooleanField(required=False)
-
-    def save(self, user):
-        submit_id = IDSubmission.objects.create_idsubmission(
-            submission_submitter=user,
-            id_document=self.validated_data.get('submission_id')
-        )
-
-        return submit_id.submission_id.url
+        return in_submission

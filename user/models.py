@@ -4,8 +4,9 @@
 # Copyright (c) 2020 - Simon Prast
 #
 
-
+import os
 import phonenumbers
+import uuid
 
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
@@ -83,12 +84,25 @@ class UserManager(BaseUserManager):
         return user
 
 
+def create_path(instance, filename):
+    folder = 'pictures/' + str(uuid.uuid4())
+    os.makedirs(os.path.join(settings.MEDIA_ROOT, folder))
+    return os.path.join(folder, filename)
+
+
 class User(AbstractBaseUser):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = models.CharField(max_length=40, unique=True)
     email = models.EmailField(
         verbose_name="Email Address", max_length=320, unique=True)
     utype = models.IntegerField(verbose_name="User Type", default=0)
     is_admin = models.BooleanField(default=False)
+
+    advisor = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True)
+    picture = models.ImageField(
+        upload_to=create_path, null=True, blank=True
+    )
 
     first_name = models.CharField(max_length=128, null=True)
     last_name = models.CharField(max_length=128, null=True)
@@ -143,12 +157,15 @@ def create_admin_user():
     # CAUTION! When changing ADMIN_USER at runtime, the old ADMIN_USER account is not automatically deleted.
 
     if User.objects.filter(username=settings.ADMIN_USER).exists():
-        User.objects.get(username=settings.ADMIN_USER) \
-            .set_password(settings.ADMIN_PASSWORD)
+        user = User.objects.get(username=settings.ADMIN_USER)
+        user.set_password(settings.ADMIN_PASSWORD)
+        user.email = settings.ADMIN_MAIL
+        if not settings.DEBUG:
+            user.save()
         print("EXISTING ADMIN ACCOUNT (SET ADMIN PASSWORD): " + settings.ADMIN_USER)
     else:
         User.objects.create_superuser(
-            settings.ADMIN_USER, settings.ADMIN_PASSWORD)
+            settings.ADMIN_USER, settings.ADMIN_MAIL, settings.ADMIN_PASSWORD)
         print("CREATE NEW ADMIN ACCOUNT: " + settings.ADMIN_USER)
 
 
