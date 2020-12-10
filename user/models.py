@@ -143,12 +143,15 @@ def create_admin_user():
     # CAUTION! When changing ADMIN_USER at runtime, the old ADMIN_USER account is not automatically deleted.
 
     if User.objects.filter(username=settings.ADMIN_USER).exists():
-        User.objects.get(username=settings.ADMIN_USER) \
-            .set_password(settings.ADMIN_PASSWORD)
+        user = User.objects.get(username=settings.ADMIN_USER)
+        user.set_password(settings.ADMIN_PASSWORD)
+        user.email = settings.ADMIN_MAIL
+        if not settings.DEBUG:
+            user.save()
         print("EXISTING ADMIN ACCOUNT (SET ADMIN PASSWORD): " + settings.ADMIN_USER)
     else:
         User.objects.create_superuser(
-            settings.ADMIN_USER, settings.ADMIN_PASSWORD)
+            settings.ADMIN_USER, settings.ADMIN_MAIL, settings.ADMIN_PASSWORD)
         print("CREATE NEW ADMIN ACCOUNT: " + settings.ADMIN_USER)
 
 
