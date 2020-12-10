@@ -55,7 +55,9 @@ INSTALLED_APPS = [
     'user',
     'design',
     'insurance',
-    'submission',
+    'submission.insurancesubmission',
+    'submission.id',
+    'submission.damagereport',
 
     # For validating phone numbers
     'phonenumbers',
