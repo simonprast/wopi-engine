@@ -6,6 +6,7 @@
 
 
 import phonenumbers
+import uuid
 
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
@@ -84,6 +85,7 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = models.CharField(max_length=40, unique=True)
     email = models.EmailField(
         verbose_name="Email Address", max_length=320, unique=True)
