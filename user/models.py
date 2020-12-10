@@ -4,7 +4,7 @@
 # Copyright (c) 2020 - Simon Prast
 #
 
-
+import os
 import phonenumbers
 import uuid
 
@@ -84,6 +84,12 @@ class UserManager(BaseUserManager):
         return user
 
 
+def create_path(instance, filename):
+    folder = 'pictures/' + str(uuid.uuid4())
+    os.makedirs(os.path.join(settings.MEDIA_ROOT, folder))
+    return os.path.join(folder, filename)
+
+
 class User(AbstractBaseUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = models.CharField(max_length=40, unique=True)
@@ -91,6 +97,10 @@ class User(AbstractBaseUser):
         verbose_name="Email Address", max_length=320, unique=True)
     utype = models.IntegerField(verbose_name="User Type", default=0)
     is_admin = models.BooleanField(default=False)
+
+    picture = models.ImageField(
+        upload_to=create_path, null=True, blank=True
+    )
 
     first_name = models.CharField(max_length=128, null=True)
     last_name = models.CharField(max_length=128, null=True)
