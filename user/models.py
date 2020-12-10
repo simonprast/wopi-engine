@@ -98,6 +98,8 @@ class User(AbstractBaseUser):
     utype = models.IntegerField(verbose_name="User Type", default=0)
     is_admin = models.BooleanField(default=False)
 
+    advisor = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True)
     picture = models.ImageField(
         upload_to=create_path, null=True, blank=True
     )
