@@ -77,8 +77,8 @@ class UserAdmin(BaseUserAdmin):
                 "fields": (
                     "username",
                     "email",
-                    "password",
-                    "verified"
+                    "verified",
+                    "password"
                 )
             }
         ),
@@ -86,7 +86,8 @@ class UserAdmin(BaseUserAdmin):
             "Personal Information", {
                 "fields": (
                     "first_name",
-                    "last_name"
+                    "last_name",
+                    "phone"
                 )
             }
         ),
@@ -98,15 +99,58 @@ class UserAdmin(BaseUserAdmin):
                 )
             }
         ),
+        (
+            "Advisor", {
+                "fields": (
+                    "advisor",
+                    "picture"
+                )
+            }
+        )
     )
     # add_fieldsets is not a standard ModelAdmin attribute. UserAdmin
     # overrides get_fieldsets to use this attribute when creating a user.
     add_fieldsets = (
-        (None, {
-            "classes": ("wide",),
-            "fields": ("username", "email", "utype", "verified", "password1", "password2")}
-         ),
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": (
+                    "username",
+                    "email",
+                    "password1",
+                    "password2",
+                    "verified"
+                )
+            }
+        ),
+        (
+            "Personal Information", {
+                "fields": (
+                    "first_name",
+                    "last_name",
+                    "phone"
+                )
+            }
+        ),
+        (
+            "Permissions", {
+                "fields": (
+                    "utype",
+                    "is_admin"
+                )
+            }
+        ),
+        (
+            "Advisor", {
+                "fields": (
+                    "advisor",
+                    "picture"
+                )
+            }
+        )
     )
+
     search_fields = ("username", "email")
     ordering = ("username", "email")
     filter_horizontal = ()
