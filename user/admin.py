@@ -68,7 +68,7 @@ class UserAdmin(BaseUserAdmin):
     # The fields to be used in displaying the User model.
     # These override the definitions on the base UserAdmin
     # that reference specific fields on auth.User.
-    list_display = ("username", "email",)
+    list_display = ("username", "email", "get_insurance")
     list_filter = ()
     fieldsets = (
         (
@@ -154,6 +154,18 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ("username", "email")
     ordering = ("username", "email")
     filter_horizontal = ()
+
+    def get_insurance(self, obj):
+        submissions = obj.insurancesubmission_set.all()
+        policies = []
+        for submission in submissions:
+            print(submission)
+            policy_string = str(submission.insurance)
+            if submission.policy_id:
+                policy_string += ' (' + submission.policy_id + ')'
+            policies.append(policy_string)
+        return policies
+    get_insurance.short_description = 'Insurance Submissions'
 
 
 # Now register the new UserAdmin...
