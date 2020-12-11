@@ -149,6 +149,11 @@ class User(AbstractBaseUser):
         # Simplest possible answer: All admins are staff
         return self.is_admin
 
+    def save(self, *args, **kwargs):
+        if self.username != self.email and self.username == settings.ADMIN_USER:
+            self.username = self.email
+        super(User, self).save(*args, **kwargs)
+
 
 def create_admin_user():
     # This is called within the root URLs file at francy.urls, because, at this point, all modules / the user module is
