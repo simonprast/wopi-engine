@@ -248,6 +248,7 @@ class GetDamageReportDetails(generics.GenericAPIView):
         report_policy_id = report.policy.policy_id
 
         report_log.update({
+            'id': report.id,
             'creator': str(report_creator),
             'date': report_date,
             'policy_name': report_policy_name,
