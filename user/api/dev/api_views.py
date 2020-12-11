@@ -10,10 +10,10 @@ from rest_framework.response import Response
 
 from user.authentication import refresh_token, remove_token
 
-
 from user.create_or_login import create_or_login
 from user.models import User
-from .serializers import UserSerializer, RegisterUserSerializer, LoginUserSerializer
+
+from .serializers import ChangeUserSerializer, LoginUserSerializer, UserSerializer, UserDetailSerializer
 
 
 class UserList(mixins.ListModelMixin,
@@ -44,7 +44,7 @@ class UserList(mixins.ListModelMixin,
 
 
 class UserCreateOrLogin(generics.GenericAPIView):
-    serializer_class = RegisterUserSerializer
+    serializer_class = UserDetailSerializer
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
@@ -55,7 +55,7 @@ class UserCreateOrLogin(generics.GenericAPIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         else:
-            serializer = RegisterUserSerializer(data=request.data)
+            serializer = UserDetailSerializer(data=request.data)
             logSerializer = LoginUserSerializer(data=request.data)
             # Create and authenticate the user, in case the given request data is valid
             return_dict, auth_status, user = create_or_login(
