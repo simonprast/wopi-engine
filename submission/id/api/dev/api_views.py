@@ -8,6 +8,7 @@
 from rest_framework import exceptions, generics, permissions, status
 from rest_framework.response import Response
 
+from user.create_or_login import validated_user_data
 from user.models import User
 
 from submission.id.models import IDSubmission
@@ -51,7 +52,6 @@ class HandleDocument(generics.GenericAPIView):
 
 class VerifyDocument(generics.GenericAPIView):
     queryset = IDSubmission.objects.all()
-    serializer_class = IDSubmissionSerializer
     permission_classes = [permissions.IsAdminUser]
 
     def get_object(self, pk):
@@ -65,18 +65,30 @@ class VerifyDocument(generics.GenericAPIView):
     def put(self, request, pk, *args, **kwargs):
         submission = self.get_object(pk=pk)
         if request.data.__contains__('verified'):
-            if request.data.__getitem__('verified').lower() in ('false', 'true'):
-                verified = True if request.data.__getitem__(
-                    'verified').lower() == 'true' else False
-                if submission.verified is verified:
-                    return Response({'verified': 'This ID has already given verified status.'})
+            if type(request.data.get('verified')) == bool:
+                # Set the varified status of the id
+                verified = request.data.get('verified')
                 submission.verified = verified
                 submission.save()
+
+                # Following lines are refreshing the user's data, in case any user keys are given
+                user = submission.submitter
+
+                # Ensure that the given user arguments are valid and set the values accordingly
+                first_name, last_name, email, phone, password = validated_user_data(
+                    request.data, change=True)
+
+                user.first_name = self.first_name or user.first_name
+                user.last_name = self.last_name or user.last_name
+                user.email = self.email or user.email
+                user.phone = self.phone or user.phone
+                user.set_password(self.password)
+                user.save()
+
                 return Response({'success': True, 'verified': verified, 'submission': str(submission)},
                                 status=status.HTTP_200_OK)
             else:
-                return Response(
-                    {'verified': ['Value must be either True or False.']}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'verified': ['Value must be a bool.']}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(
                 {'verified': ['This field is required.']}, status=status.HTTP_400_BAD_REQUEST)
