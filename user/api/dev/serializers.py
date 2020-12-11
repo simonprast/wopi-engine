@@ -57,7 +57,7 @@ class ChangeUserSerializer(serializers.ModelSerializer):
         change = True if self.context.get('request').method == 'PUT' else False
 
         # Ensure that the given user arguments are valid and set the values accordingly
-        self.first_name, self.last_name, self.email, self.phone, password = validated_user_data(
+        self.first_name, self.last_name, self.email, self.phone, self.password = validated_user_data(
             self.initial_data, change=change)
         return value
 
@@ -66,8 +66,14 @@ class ChangeUserSerializer(serializers.ModelSerializer):
         instance.last_name = self.last_name or instance.last_name
         instance.email = self.email or instance.email
         instance.phone = self.phone or instance.phone
+
+        new_password = False
+        if not instance.check_password(self.password):
+            instance.set_password(self.password)
+            new_password = True
+
         instance.save()
-        return instance
+        return instance, new_password
 
     class Meta:
         model = User

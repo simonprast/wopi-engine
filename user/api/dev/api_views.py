@@ -120,7 +120,7 @@ class UserDetail(mixins.RetrieveModelMixin,
             # Update the object using the serializer.
             partial = kwargs.pop('partial', False)
             instance = self.get_object()
-            serializer = self.get_serializer(
+            serializer, new_password = self.get_serializer(
                 instance, data=altered_request_data, partial=partial)
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
@@ -128,12 +128,8 @@ class UserDetail(mixins.RetrieveModelMixin,
             # Copy the read-only serializer.data dictionary.
             serializer_data = serializer.data
 
-            # Set a new password if it was sent through the request body
-            password = request.data.get('password', False)
-            if password:
-                requested_user.set_password(password)
-                requested_user.save()
-
+            # If the password was refreshed, handle the user's current token
+            if new_password:
                 # If the user who requests the password change is the user itself,
                 # the user is given a new token. If the password is changed by an admin,
                 # the valid login token is deleted.

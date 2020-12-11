@@ -156,7 +156,7 @@ def validated_user_data(initial_data, change=False):
             errors.update(
                 {'password': ['Given password does not match the requirements.'
                               '(Min-length 8, alphanumeric, not common and not similar to user data)']})
-        if change:
+        if change and 'current_password' in initial_data:
             if password == initial_data['current_password']:
                 errors.update(
                     {'password_match': ['The new password matches the current password.']})
