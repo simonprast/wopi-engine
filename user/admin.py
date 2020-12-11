@@ -68,17 +68,17 @@ class UserAdmin(BaseUserAdmin):
     # The fields to be used in displaying the User model.
     # These override the definitions on the base UserAdmin
     # that reference specific fields on auth.User.
-    list_display = ("username", "email",)
+    list_display = ("email", "first_name", "last_name",
+                    "advisor", "get_insurance")
     list_filter = ()
     fieldsets = (
         (
             None,
             {
                 "fields": (
-                    "username",
                     "email",
-                    "password",
-                    "verified"
+                    "verified",
+                    "password"
                 )
             }
         ),
@@ -86,7 +86,8 @@ class UserAdmin(BaseUserAdmin):
             "Personal Information", {
                 "fields": (
                     "first_name",
-                    "last_name"
+                    "last_name",
+                    "phone"
                 )
             }
         ),
@@ -98,18 +99,73 @@ class UserAdmin(BaseUserAdmin):
                 )
             }
         ),
+        (
+            "Advisor", {
+                "fields": (
+                    "advisor",
+                    "picture"
+                )
+            }
+        )
     )
     # add_fieldsets is not a standard ModelAdmin attribute. UserAdmin
     # overrides get_fieldsets to use this attribute when creating a user.
     add_fieldsets = (
-        (None, {
-            "classes": ("wide",),
-            "fields": ("username", "email", "utype", "verified", "password1", "password2")}
-         ),
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": (
+                    "username",
+                    "email",
+                    "password1",
+                    "password2",
+                    "verified"
+                )
+            }
+        ),
+        (
+            "Personal Information", {
+                "fields": (
+                    "first_name",
+                    "last_name",
+                    "phone"
+                )
+            }
+        ),
+        (
+            "Permissions", {
+                "fields": (
+                    "utype",
+                    "is_admin"
+                )
+            }
+        ),
+        (
+            "Advisor", {
+                "fields": (
+                    "advisor",
+                    "picture"
+                )
+            }
+        )
     )
+
     search_fields = ("username", "email")
     ordering = ("username", "email")
     filter_horizontal = ()
+
+    def get_insurance(self, obj):
+        submissions = obj.insurancesubmission_set.all()
+        policies = []
+        for submission in submissions:
+            print(submission)
+            policy_string = str(submission.insurance)
+            if submission.policy_id:
+                policy_string += ' (' + submission.policy_id + ')'
+            policies.append(policy_string)
+        return policies
+    get_insurance.short_description = 'Insurance Submissions'
 
 
 # Now register the new UserAdmin...

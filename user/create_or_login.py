@@ -39,7 +39,7 @@ def create_or_login(regSerializer, logSerializer, request, validated=False):
     # Authenticate the newly created user
     # OR authenticate the existing user with given username and password combination.
     token, created, user = obtain_auth_token(
-        # This argument takes a username, but the RegisterUserSerializer sets the given email as the user's username
+        # This argument takes a username, but the UserDetailSerializer sets the given email as the user's username
         request.data.__getitem__('email'),
         request.data.__getitem__('password')
     )
@@ -71,7 +71,7 @@ def create_or_login(regSerializer, logSerializer, request, validated=False):
     return return_dict, auth_status, user
 
 
-def validated_user_data(initial_data):
+def validated_user_data(initial_data, change=False):
     first_name, last_name, email, phone, password = None, None, None, None, None
 
     # Dict of field errors
@@ -120,8 +120,11 @@ def validated_user_data(initial_data):
                 elif name == 'last_name':
                     last_name = content
         else:
-            errors.update(
-                {name: ['This field is required.']})
+            # 'change' is set to true if the user object is altered.
+            # In this case, the fields aren't required.
+            if not change:
+                errors.update(
+                    {name: ['This field is required.']})
 
     if 'email' in initial_data:
         email_to_validate = initial_data['email']
@@ -132,8 +135,9 @@ def validated_user_data(initial_data):
             errors.update(
                 {'email': ['This seems to be not a valid email.']})
     else:
-        errors.update(
-            {'email': ['This field is required.']})
+        if not change:
+            errors.update(
+                {'email': ['This field is required.']})
 
     if 'phone' in initial_data:
         phone_number = check_phone_number(initial_data['phone'])
@@ -150,11 +154,16 @@ def validated_user_data(initial_data):
             password = password_to_validate
         except ValidationError:
             errors.update(
-                {'password': ['Given password does not match the requirements. '
+                {'password': ['Given password does not match the requirements.'
                               '(Min-length 8, alphanumeric, not common and not similar to user data)']})
+        if change:
+            if password == initial_data['current_password']:
+                errors.update(
+                    {'password_match': ['The new password matches the current password.']})
     else:
-        errors.update(
-            {'password': ['This field is required.']})
+        if not change:
+            errors.update(
+                {'password': ['This field is required.']})
 
     # If any errors are in the error dictionary, raise those errors
     if errors:

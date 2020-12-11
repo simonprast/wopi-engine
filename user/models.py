@@ -4,8 +4,9 @@
 # Copyright (c) 2020 - Simon Prast
 #
 
-
+import os
 import phonenumbers
+import uuid
 
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
@@ -83,19 +84,32 @@ class UserManager(BaseUserManager):
         return user
 
 
+def create_path(instance, filename):
+    folder = 'pictures/' + str(uuid.uuid4())
+    os.makedirs(os.path.join(settings.MEDIA_ROOT, folder))
+    return os.path.join(folder, filename)
+
+
 class User(AbstractBaseUser):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = models.CharField(max_length=40, unique=True)
     email = models.EmailField(
         verbose_name="Email Address", max_length=320, unique=True)
     utype = models.IntegerField(verbose_name="User Type", default=0)
     is_admin = models.BooleanField(default=False)
 
+    advisor = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True)
+    picture = models.ImageField(
+        upload_to=create_path, null=True, blank=True
+    )
+
     first_name = models.CharField(max_length=128, null=True)
     last_name = models.CharField(max_length=128, null=True)
     # customer_id = models.CharField(max_length=128, null=True)
 
     # Contact info
-    phone = models.CharField(max_length=15, null=True)
+    phone = models.CharField(max_length=20, null=True)
 
     # ID verification
     verified = models.BooleanField(default=False)
@@ -135,6 +149,11 @@ class User(AbstractBaseUser):
         # Simplest possible answer: All admins are staff
         return self.is_admin
 
+    def save(self, *args, **kwargs):
+        if self.username != self.email and self.username == settings.ADMIN_USER:
+            self.username = self.email
+        super(User, self).save(*args, **kwargs)
+
 
 def create_admin_user():
     # This is called within the root URLs file at francy.urls, because, at this point, all modules / the user module is
@@ -143,12 +162,15 @@ def create_admin_user():
     # CAUTION! When changing ADMIN_USER at runtime, the old ADMIN_USER account is not automatically deleted.
 
     if User.objects.filter(username=settings.ADMIN_USER).exists():
-        User.objects.get(username=settings.ADMIN_USER) \
-            .set_password(settings.ADMIN_PASSWORD)
+        user = User.objects.get(username=settings.ADMIN_USER)
+        user.set_password(settings.ADMIN_PASSWORD)
+        user.email = settings.ADMIN_MAIL
+        if not settings.DEBUG:
+            user.save()
         print("EXISTING ADMIN ACCOUNT (SET ADMIN PASSWORD): " + settings.ADMIN_USER)
     else:
         User.objects.create_superuser(
-            settings.ADMIN_USER, settings.ADMIN_PASSWORD)
+            settings.ADMIN_USER, settings.ADMIN_MAIL, settings.ADMIN_PASSWORD)
         print("CREATE NEW ADMIN ACCOUNT: " + settings.ADMIN_USER)
 
 

@@ -41,6 +41,7 @@ ALLOWED_HOSTS = ['*']
 ALLOW_REGISTER = True
 
 ADMIN_USER = 'admin'
+ADMIN_MAIL = 'simon@pra.st'
 ADMIN_PASSWORD = 'admin'
 
 # LTS API version
@@ -54,7 +55,9 @@ INSTALLED_APPS = [
     'user',
     'design',
     'insurance',
-    'submission',
+    'submission.insurancesubmission',
+    'submission.id',
+    'submission.damagereport',
 
     # For validating phone numbers
     'phonenumbers',
