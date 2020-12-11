@@ -134,17 +134,21 @@ class SendMessage(generics.GenericAPIView):
         sender = request.user
 
         if Message.objects.filter(report=report, sender=sender).count() > 0:
-            if (datetime.now(timezone.utc) - self.get_latest_message(report, sender).datetime).total_seconds() < 60:
+            difference = (
+                datetime.now(timezone.utc) -
+                self.get_latest_message(report, sender).datetime
+            ).total_seconds()
+            if difference < 20:
                 return Response(
-                    {'antispam': [
-                        'Time difference since the last message received is too low.']},
+                    {
+                        'antispam': ['Time difference since the last message received is too low.'],
+                        'time_remaining': 20-difference
+                    },
                     status=status.HTTP_403_FORBIDDEN)
 
         serializer = MessageSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         message = serializer.save(user=sender, report=report)
-
-        print(request.data)
 
         if request.data.__contains__('images'):
             for image in request.data.getlist('images'):
