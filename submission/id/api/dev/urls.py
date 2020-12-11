@@ -20,7 +20,7 @@ urlpatterns = [
     path('verify/<int:pk>/', api_views.VerifyDocument.as_view()),
 
     # GET - all IDs of a single user (admin)
-    path('user/<int:pk>/', api_views.UserDocument.as_view()),
+    path('user/<uuid:pk>/', api_views.UserDocument.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
