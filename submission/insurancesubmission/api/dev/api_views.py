@@ -12,7 +12,7 @@ from rest_framework.response import Response
 
 from submission.insurancesubmission.models import InsuranceSubmission
 
-from user.api.dev.serializers import LoginUserSerializer, RegisterUserSerializer
+from user.api.dev.serializers import LoginUserSerializer, UserDetailSerializer
 from user.create_or_login import create_or_login
 
 from .serializers import InsuranceSubmissionSerializer
@@ -26,8 +26,8 @@ class SubmitInsurance(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         # For anonymous users, an account will be created with the insurance submission process
         if request.user.is_anonymous:
-            # Both the RegisterUserSerializer and the SubmitSerializer are used
-            register_serializer = RegisterUserSerializer(data=request.data)
+            # Both the UserDetailSerializer and the SubmitSerializer are used
+            register_serializer = UserDetailSerializer(data=request.data)
             login_serializer = LoginUserSerializer(data=request.data)
             submit_serializer = InsuranceSubmissionSerializer(
                 data=request.data)

@@ -18,7 +18,7 @@ class UserSerializer(serializers.ModelSerializer):
         exclude = ['password', 'is_admin']
 
 
-class RegisterUserSerializer(serializers.Serializer):
+class UserDetailSerializer(serializers.Serializer):
     first_name, last_name, email, phone, password = None, None, None, None, None
 
     def validate(self, value):
