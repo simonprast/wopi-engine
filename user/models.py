@@ -109,7 +109,7 @@ class User(AbstractBaseUser):
     # customer_id = models.CharField(max_length=128, null=True)
 
     # Contact info
-    phone = models.CharField(max_length=15, null=True)
+    phone = models.CharField(max_length=20, null=True)
 
     # ID verification
     verified = models.BooleanField(default=False)
