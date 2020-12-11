@@ -78,14 +78,14 @@ class MessageAdmin(admin.ModelAdmin):
     list_display = ("id", "get_reportid", "datetime", "sender", "message_body")
     list_filter = ("report", "sender")
     fieldsets = (
-        (None, {"fields": ("report", "sender", "datetime", "message_body")}),
+        (None, {"fields": ("report", "sender", "message_body")}),
         # ("Data", {"fields": ("submission_data",)}),
     )
 
     add_fieldsets = (
         (None, {
             "classes": ("wide",),
-            "fields": ("report", "sender", "datetime", "message_body")}
+            "fields": ("report", "sender", "message_body")}
          ),
     )
     search_fields = ("report", "sender", "message_body")

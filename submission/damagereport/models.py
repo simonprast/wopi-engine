@@ -44,6 +44,9 @@ class DamageReportManager(models.Manager):
 
 
 class DamageReport(models.Model):
+    datetime = models.DateTimeField(
+        auto_now_add=True
+    )
     policy = models.ForeignKey(
         InsuranceSubmission, on_delete=models.SET_NULL, blank=True, null=True
     )

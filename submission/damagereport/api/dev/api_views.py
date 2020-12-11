@@ -242,12 +242,14 @@ class GetDamageReportDetails(generics.GenericAPIView):
 
         report_log = {}
 
-        report_creator = str(report.submitter)
+        report_creator = report.submitter
+        report_date = str(report.datetime)
         report_policy_name = str(report.policy.insurance)
         report_policy_id = report.policy.policy_id
 
         report_log.update({
-            'creator': report_creator,
+            'creator': str(report_creator),
+            'date': report_date,
             'policy_name': report_policy_name,
             'policy_id': report_policy_id,
             'status': report.status
@@ -259,12 +261,17 @@ class GetDamageReportDetails(generics.GenericAPIView):
 
         for message in messages:
             date = str(message.datetime)
-            sender = str(message.sender)
+            sender = message.sender
             body = message.message_body
+            picture = sender.picture.url if sender.picture else None
 
             message_dict = {
                 'date': date,
-                'sender': sender,
+                'sender': {
+                    'creator': sender == report_creator,
+                    'name': str(sender),
+                    'picture': picture
+                },
                 'body': body
             }
 
