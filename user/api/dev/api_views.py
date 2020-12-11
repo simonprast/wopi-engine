@@ -68,7 +68,7 @@ class UserDetail(mixins.RetrieveModelMixin,
                  mixins.DestroyModelMixin,
                  generics.GenericAPIView):
     queryset = User.objects.all()
-    serializer_class = UserSerializer
+    serializer_class = ChangeUserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def check_requested_object(self, pk):
@@ -103,6 +103,13 @@ class UserDetail(mixins.RetrieveModelMixin,
             # utype can only be altered by administrative accounts.
             if altered_request_data.__contains__('utype') and not request.user.is_staff:
                 altered_request_data.pop('utype')
+
+            if requested_user == request.user:
+                if not request.data.__contains__('current_password'):
+                    return Response({'current_password': ['This field is required.']})
+
+                if not request.user.check_password(request.data.get('current_password')):
+                    return Response({'current_password_does_not_match': ['Given password is wrong.']})
 
             # Update the object using the serializer.
             partial = kwargs.pop('partial', False)
