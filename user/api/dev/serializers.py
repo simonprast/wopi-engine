@@ -51,6 +51,9 @@ class ChangeUserSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(required=False)
     email = serializers.CharField(required=False)
     phone = serializers.CharField(required=False)
+    address_1 = serializers.CharField(required=False)
+    address_2 = serializers.CharField(required=False)
+    zipcode = serializers.CharField(required=False)
 
     def validate(self, value):
         # If the request method is PUT it must be stated that the object
@@ -67,6 +70,9 @@ class ChangeUserSerializer(serializers.ModelSerializer):
         instance.last_name = self.last_name or instance.last_name
         instance.email = self.email or instance.email
         instance.phone = self.phone or instance.phone
+        instance.address_1 = validated_data.get('address_1')
+        instance.address_2 = validated_data.get('address_2')
+        instance.zipcode = validated_data.get('zipcode')
 
         new_password = False
         if not instance.check_password(self.password):
@@ -91,5 +97,8 @@ class ChangeUserSerializer(serializers.ModelSerializer):
             'last_name',
             'email',
             'phone',
-            'advisor'
+            'advisor',
+            'address_1',
+            'address_2',
+            'zipcode'
         ]

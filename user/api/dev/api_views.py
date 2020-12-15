@@ -45,7 +45,7 @@ class UserList(mixins.ListModelMixin,
 
             staff_list = []
             for staff in staff_members:
-                staff_list.append(create_user_dict(staff))
+                staff_list.append(create_basic_user_dict(staff))
 
             customer_list = []
             for customer in customers:
@@ -104,7 +104,7 @@ class UserDetail(mixins.RetrieveModelMixin,
         requested_user = self.check_requested_object(pk=pk)
         # Only allow staff users and own requests
         if request.user.is_staff or requested_user == request.user:
-            user_dict = create_user_dict(request.user)
+            user_dict = create_user_dict(requested_user)
             return Response(user_dict, status=status.HTTP_200_OK)
         else:
             raise exceptions.PermissionDenied
@@ -250,6 +250,9 @@ def create_user_dict(user):
         'first_name': user.first_name,
         'last_name': user.last_name,
         'phone': user.phone,
+        'address1': user.address_1,
+        'address2': user.address_2,
+        'zipcode': user.zipcode,
         'utype': user.utype,
         'verified': user.verified
     }

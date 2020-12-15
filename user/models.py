@@ -104,12 +104,17 @@ class User(AbstractBaseUser):
         upload_to=create_path, null=True, blank=True
     )
 
-    first_name = models.CharField(max_length=128, null=True)
-    last_name = models.CharField(max_length=128, null=True)
+    first_name = models.CharField(max_length=255, null=True)
+    last_name = models.CharField(max_length=255, null=True)
     # customer_id = models.CharField(max_length=128, null=True)
 
     # Contact info
-    phone = models.CharField(max_length=20, null=True)
+    phone = models.CharField(max_length=255, null=True)
+
+    # Address
+    address_1 = models.CharField(max_length=255, null=True, blank=False)
+    address_2 = models.CharField(max_length=255, null=True, blank=False)
+    zipcode = models.CharField(max_length=255, null=True, blank=False)
 
     # ID verification
     verified = models.BooleanField(default=False)
