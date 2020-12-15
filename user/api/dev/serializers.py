@@ -81,12 +81,14 @@ class ChangeUserSerializer(serializers.ModelSerializer):
         old_email = instance.email
         instance.email = self.email or instance.email
         instance.phone = self.phone or instance.phone
-        instance.address_1 = validated_data.get('address_1')
-        instance.address_2 = validated_data.get('address_2')
-        instance.zipcode = validated_data.get('zipcode')
+        instance.address_1 = validated_data.get(
+            'address_1') or instance.address_1
+        instance.address_2 = validated_data.get(
+            'address_2') or instance.address_2
+        instance.zipcode = validated_data.get('zipcode') or instance.zipcode
 
         new_password = False
-        if not instance.check_password(self.password):
+        if self.password and not instance.check_password(self.password):
             instance.set_password(self.password)
             new_password = True
 
