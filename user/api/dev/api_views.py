@@ -38,15 +38,20 @@ class UserList(mixins.ListModelMixin,
     def get(self, request, *args, **kwargs):
         # A staff user is allowed to see all users
         if request.user.is_staff:
+            staff_members = User.objects.filter(utype=7)
             customers = User.objects.filter(utype=1)
 
             user_list = [create_user_dict(request.user)]
 
-            customer_list = []
+            staff_list = []
+            for staff in staff_members:
+                staff_list.append(create_user_dict(staff))
 
+            customer_list = []
             for customer in customers:
                 customer_list.append(create_basic_user_dict(customer))
 
+            user_list.append(staff_list)
             user_list.append(customer_list)
 
             return Response(user_list, status=status.HTTP_200_OK)
