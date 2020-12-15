@@ -116,7 +116,7 @@ class ChangeUserSerializer(serializers.ModelSerializer):
                 'Bestätigung Deiner neuen E-Mail Adresse',
                 mail_message,
                 None,
-                ['simon@pra.st'],
+                [self.email],
                 fail_silently=False,
                 html_message=mail_message
             )

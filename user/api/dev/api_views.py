@@ -460,7 +460,7 @@ class RequestEmailVerification(generics.GenericAPIView):
             'Bestätigung Deiner E-Mail Adresse',
             mail_message,
             None,
-            ['simon@pra.st'],
+            [request.user.email],
             fail_silently=False,
             html_message=mail_message
         )

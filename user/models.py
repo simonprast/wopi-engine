@@ -79,7 +79,7 @@ class UserManager(BaseUserManager):
             'Willkommen beim SPARDA Versicherungsportal!',
             mail_message,
             None,
-            ['simon@pra.st'],
+            [self.email],
             fail_silently=False,
             html_message=mail_message
         )
