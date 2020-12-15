@@ -46,6 +46,7 @@ class LoginUserSerializer(serializers.Serializer):
 
 
 class ChangeUserSerializer(serializers.ModelSerializer):
+    advisor = serializers.UUIDField(required=False)
     first_name = serializers.CharField(required=False)
     last_name = serializers.CharField(required=False)
     email = serializers.CharField(required=False)
@@ -72,6 +73,14 @@ class ChangeUserSerializer(serializers.ModelSerializer):
             instance.set_password(self.password)
             new_password = True
 
+        if self.initial_data.get('advisor'):
+            try:
+                advisor = User.objects.get(
+                    pk=self.initial_data.get('advisor'), utype=7)
+                instance.advisor = advisor
+            except User.DoesNotExist:
+                return "AdvisorDoesNotExist", None
+
         instance.save()
         return instance, new_password
 
@@ -81,5 +90,6 @@ class ChangeUserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'email',
-            'phone'
+            'phone',
+            'advisor'
         ]

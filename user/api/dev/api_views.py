@@ -130,11 +130,16 @@ class UserDetail(mixins.RetrieveModelMixin,
 
             # Update the object using the serializer.
             partial = kwargs.pop('partial', False)
-            instance = self.get_object()
-            serializer, new_password = self.get_serializer(
+            instance = requested_user
+            serializer = self.get_serializer(
                 instance, data=altered_request_data, partial=partial)
             serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
+            user, new_password = serializer.update(
+                instance, serializer.validated_data)
+
+            if user == "AdvisorDoesNotExist":
+                return Response({'advisor_does_not_exist': 'No advisor with given UUID found.'},
+                                status=status.HTTP_400_BAD_REQUEST)
 
             # Copy the read-only serializer.data dictionary.
             serializer_data = serializer.data
