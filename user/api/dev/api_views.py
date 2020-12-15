@@ -38,7 +38,18 @@ class UserList(mixins.ListModelMixin,
     def get(self, request, *args, **kwargs):
         # A staff user is allowed to see all users
         if request.user.is_staff:
-            return self.list(request, *args, **kwargs)
+            customers = User.objects.filter(utype=1)
+
+            user_list = [create_user_dict(request.user)]
+
+            customer_list = []
+
+            for customer in customers:
+                customer_list.append(create_basic_user_dict(customer))
+
+            user_list.append(customer_list)
+
+            return Response(user_list, status=status.HTTP_200_OK)
         # AnonymousUsers are denied
         # If the User is not anonymous, only show the requesting user himself
         elif not request.user.is_anonymous:
@@ -144,6 +155,82 @@ class UserDetail(mixins.RetrieveModelMixin,
             raise exceptions.PermissionDenied
 
 
+def create_basic_user_dict(user):
+    # Create the user_dict, which initally stores the user's base data and is
+    # further used to store all important data for the main profile page view.
+    user_dict = {
+        'id': user.id,
+        'email': user.email,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'phone': user.phone,
+        'utype': user.utype,
+        'verified': user.verified
+    }
+
+    # If the user is assigned an advisor, the advisor's information is added to the user_dict
+    if user.advisor:
+        # This throws an error if the advisor has no profile picture set
+        # We don't care about this, as we expect every advisor to have a profile picture
+        user_dict.update({
+            'advisor': {
+                'first_name': user.advisor.first_name,
+                'last_name': user.advisor.last_name,
+                'email': user.advisor.email,
+                'phone': user.advisor.phone,
+                'picture': user.advisor.picture.url
+            }
+        })
+
+    # Get basic information about waiting requests of this specific user
+    reports = DamageReport.objects.filter(submitter=user, status='w')
+
+    if reports.count() > 0:
+        report_list = []
+
+        for report in reports:
+            report_dict = {
+                'id': report.id
+            }
+            report_list.append(report_dict)
+
+        user_dict.update({
+            'damagereports': report_list
+        })
+
+    # Get the user's identification document and show its attributes at the user_dict
+    doc = get_user_id(user=user)
+    if doc and not doc.verified:
+        doc_dict = {
+            'id': doc.id
+        }
+
+        user_dict.update({
+            'id_document': doc_dict
+        })
+
+    # If the user has any unanswered insurance submissions, create a list containing
+    # all unanswered submissions and add the list as 'insurances' to the user_dict.
+    insurance_submissions = get_user_submissions(
+        user=user, active=False)
+
+    if insurance_submissions.count() > 0:
+        submission_list = []
+
+        # Every submission's data is saved to a dictionary and appended to the submission data list
+        for submission in insurance_submissions:
+            submission_dict = {
+                'id': submission.id
+            }
+            submission_list.append(submission_dict)
+
+        user_dict.update({
+            'insurances': submission_list
+        })
+
+    return user_dict
+
+
 def create_user_dict(user):
     # Create the user_dict, which initally stores the user's base data and is
     # further used to store all important data for the main profile page view.
@@ -233,6 +320,7 @@ def create_user_dict(user):
         user_dict.update({
             'insurances': submission_list
         })
+
     return user_dict
 
 
@@ -245,7 +333,13 @@ def get_user_id(user, latest=True):
         return False
 
 
-def get_user_submissions(user):
-    submissions = InsuranceSubmission.objects.filter(
-        submitter=user, denied=False)
+def get_user_submissions(user, active=None):
+    if active is not None:
+        submissions = InsuranceSubmission.objects.filter(
+            submitter=user, denied=False, active=active
+        )
+    else:
+        submissions = InsuranceSubmission.objects.filter(
+            submitter=user, denied=False
+        )
     return submissions
