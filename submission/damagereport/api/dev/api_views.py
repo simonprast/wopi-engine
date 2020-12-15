@@ -119,6 +119,10 @@ class SendMessage(generics.GenericAPIView):
         except Message.DoesNotExist:
             raise exceptions.NotFound
 
+    def get_images(self, message):
+        images = Image.objects.filter(message=message)
+        return images
+
     def post(self, request, report, *args, **kwargs):
         report = self.get_report(pk=report)
 
@@ -155,7 +159,23 @@ class SendMessage(generics.GenericAPIView):
                 img = Image(image=image, message=message)
                 img.save()
 
-        return Response(serializer.data)
+        message_dict = {
+            'message': message.message_body
+        }
+
+        images = self.get_images(message=message)
+
+        if images.count() > 0:
+            message_images = []
+            for image in images:
+                message_images.append({
+                    'url': image.image.url
+                })
+            message_dict.update({
+                'images': message_images
+            })
+
+        return Response(message_dict, status=status.HTTP_200_OK)
 
 
 class GetDamageReports(generics.GenericAPIView):
