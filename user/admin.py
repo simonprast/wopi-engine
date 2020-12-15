@@ -11,7 +11,7 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 
-from .models import User
+from .models import User, VerifyEmailToken
 
 
 class UserCreationForm(forms.ModelForm):
@@ -95,7 +95,6 @@ class UserAdmin(BaseUserAdmin):
             "Permissions", {
                 "fields": (
                     "utype",
-                    "is_admin"
                 )
             }
         ),
@@ -137,7 +136,6 @@ class UserAdmin(BaseUserAdmin):
             "Permissions", {
                 "fields": (
                     "utype",
-                    "is_admin"
                 )
             }
         ),
@@ -173,3 +171,29 @@ admin.site.register(User, UserAdmin)
 # ... and, since we"re not using Django"s built-in permissions,
 # unregister the Group model from admin.
 admin.site.unregister(Group)
+
+
+class EmailTokenAdmin(BaseUserAdmin):
+    # form = EmailTokenChangeForm
+    # add_form = UserCreationForm
+
+    list_display = ("user", "token")
+    list_filter = ()
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "user",
+                    "token"
+                )
+            }
+        ),
+    )
+
+    search_fields = ("user", "token")
+    ordering = ("user", "token")
+    filter_horizontal = ()
+
+
+admin.site.register(VerifyEmailToken, EmailTokenAdmin)

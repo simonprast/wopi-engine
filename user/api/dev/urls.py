@@ -12,12 +12,24 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from . import api_views
 
 urlpatterns = [
-    # GET a list of users
+    # GET - show the requesting user itself (customer/admin)
+    # GET - show a list of all users, staff as well as customers (admin)
     path('', api_views.UserList.as_view()),
-    # GET, or PUT a specific user by its id
+
+    # GET - show details of a specific user (admin)
+    # GET - show details of a specific user (customer - if the requested user is the customer itself)
+    # PUT - change a specific user's data (admin)
+    # PUT - change a specific user's data (customer - if the requsted user is the customer itself)
     path('<uuid:pk>/', api_views.UserDetail.as_view()),
-    # CREATE a new user or also authenticate an existing user
+
+    # POST - create a new user or authenticate an existing user
     path('create/', api_views.UserCreateOrLogin.as_view()),
+
+    # POST - verify a customer's email address using a token
+    path('verify-mail/<uuid:token>/', api_views.VerifyEmail.as_view()),
+
+    # POST - request a verification token for the current email address
+    path('verify-mail/request/', api_views.RequestEmailVerification.as_view()),
 
     # Todo:
     # https://stackoverflow.com/questions/14567586/token-authentication-for-restful-api-should-the-token-be-periodically-changed

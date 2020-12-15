@@ -7,6 +7,10 @@
 
 import json
 
+from datetime import datetime, timezone
+
+from django.core.mail import send_mail
+
 from rest_framework import exceptions, generics, mixins, permissions, status
 from rest_framework.response import Response
 
@@ -17,7 +21,7 @@ from submission.insurancesubmission.models import InsuranceSubmission
 from user.authentication import refresh_token, remove_token
 
 from user.create_or_login import create_or_login
-from user.models import User
+from user.models import User, VerifyEmailToken
 
 from .serializers import ChangeUserSerializer, LoginUserSerializer, UserSerializer, UserDetailSerializer
 
@@ -177,6 +181,11 @@ def create_basic_user_dict(user):
         'utype': user.utype,
         'verified': user.verified
     }
+
+    if user.is_staff:
+        user_dict.update({
+            'picture': user.picture.url
+        })
 
     # If the user is assigned an advisor, the advisor's information is added to the user_dict
     if user.advisor:
@@ -356,3 +365,107 @@ def get_user_submissions(user, active=None):
             submitter=user, denied=False
         )
     return submissions
+
+
+class VerifyEmail(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_token_obj(self, token):
+        try:
+            token_obj = VerifyEmailToken.objects.get(token=token)
+
+            if (datetime.now(timezone.utc) - token_obj.created_at).total_seconds() > 7200:
+                token_obj.delete()
+                return 'TokenExpired'
+
+            return token_obj
+        except VerifyEmailToken.DoesNotExist:
+            return None
+
+    def post(self, request, token, *args, **kwargs):
+        if request.user.is_anonymous:
+            # Deny any request thats not from an AnonymousUser
+            return Response(
+                {'PermissionDenied': 'You must be authenticated in order to verify your email address.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        token_obj = self.get_token_obj(token)
+
+        if token_obj is None:
+            return Response(
+                {'TokenNotFound': 'Given token was not found.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if token_obj == 'TokenExpired':
+            return Response(
+                {'TokenExpired': 'This token is expired.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        if token_obj.user != request.user:
+            return Response(
+                {'PermissionDenied': 'This token is not for this user.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        token_obj.user.verified = True
+        token_obj.user.save()
+        token_obj.delete()
+
+        return Response(
+            {'success': 'The user is now verified.'},
+            status=status.HTTP_200_OK
+        )
+
+
+class RequestEmailVerification(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, token, *args, **kwargs):
+        if request.user.is_anonymous:
+            # Deny any request thats not from an AnonymousUser
+            return Response(
+                {'PermissionDenied': 'You must be authenticated in order to verify your email address.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        current_tokens = VerifyEmailToken.objects.filter(user=request.user)
+
+        if current_tokens.count() > 0:
+            token_obj = VerifyEmailToken.objects.get(user=request.user)
+
+            if (datetime.now(timezone.utc) - token_obj.created_at).total_seconds() < 7200:
+                return Response(
+                    {'VerificationAlreadyActive':
+                        'The verification process for this email is already initiated (less than 2h ago).'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            else:
+                token_obj.delete()
+
+        verify_email_token = VerifyEmailToken(user=request.user)
+        verify_email_token.save()
+
+        mail_message = \
+            'Hallo ' + request.user.first_name + '!' \
+            '<br><br>Hier ist die Mail zum Bestätigen deiner E-Mail Adresse.' \
+            '<br><br>Um deine E-Mail Adresse zu bestätigen, klick bitte auf folgenden Link:' \
+            '<br><a href="https://app.spardaplus.at/?v=' + str(verify_email_token.token) + \
+            '">https://app.spardaplus.at/?v=' + \
+            str(verify_email_token.token) + '</a>'
+
+        send_mail(
+            'Bestätigung Deiner E-Mail Adresse',
+            mail_message,
+            None,
+            ['simon@pra.st'],
+            fail_silently=False,
+            html_message=mail_message
+        )
+
+        return Response(
+            {'success': 'E-Mail was sent to the user.'},
+            status=status.HTTP_200_OK
+        )

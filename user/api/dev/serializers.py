@@ -4,10 +4,11 @@
 # Copyright (c) 2020 - Simon Prast
 #
 
+from django.core.mail import send_mail
 
 from rest_framework import serializers
 
-from user.models import User
+from user.models import User, VerifyEmailToken
 
 from user.create_or_login import validated_user_data
 
@@ -20,6 +21,9 @@ class UserSerializer(serializers.ModelSerializer):
 
 class UserDetailSerializer(serializers.Serializer):
     first_name, last_name, email, phone, password = None, None, None, None, None
+    address_1 = serializers.CharField(required=False)
+    address_2 = serializers.CharField(required=False)
+    zipcode = serializers.CharField(required=False)
 
     def validate(self, value):
         # Ensure that the given user arguments are valid and set the values accordingly
@@ -36,6 +40,12 @@ class UserDetailSerializer(serializers.Serializer):
             password=self.password,
             serializers=serializers
         )
+
+        if user:
+            user.address_1 = self.validated_data.get('address_1')
+            user.address_2 = self.validated_data.get('address_2')
+            user.zipcode = self.validated_data.get('zipcode')
+            user.save()
 
         return True if user else False
 
@@ -68,6 +78,7 @@ class ChangeUserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.first_name = self.first_name or instance.first_name
         instance.last_name = self.last_name or instance.last_name
+        old_email = instance.email
         instance.email = self.email or instance.email
         instance.phone = self.phone or instance.phone
         instance.address_1 = validated_data.get('address_1')
@@ -86,6 +97,29 @@ class ChangeUserSerializer(serializers.ModelSerializer):
                 instance.advisor = advisor
             except User.DoesNotExist:
                 return "AdvisorDoesNotExist", None
+
+        if self.email and old_email != self.email:
+            instance.verified = False
+            VerifyEmailToken.objects.filter(user=instance).delete()
+            verify_email_token = VerifyEmailToken(user=instance)
+            verify_email_token.save()
+
+            mail_message = \
+                'Hallo ' + instance.first_name + '!' \
+                '<br><br>Deine E-Mail Adresse wurde geändert.' \
+                '<br><br>Um deine E-Mail Adresse zu bestätigen, klick bitte auf folgenden Link:' \
+                '<br><a href="https://app.spardaplus.at/?v=' + str(verify_email_token.token) + \
+                '">https://app.spardaplus.at/?v=' + \
+                str(verify_email_token.token) + '</a>'
+
+            send_mail(
+                'Bestätigung Deiner neuen E-Mail Adresse',
+                mail_message,
+                None,
+                ['simon@pra.st'],
+                fail_silently=False,
+                html_message=mail_message
+            )
 
         instance.save()
         return instance, new_password

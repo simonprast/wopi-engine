@@ -8,9 +8,10 @@ import os
 import phonenumbers
 import uuid
 
+from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
-from django.db import models
+from django.core.mail import send_mail
 
 
 class UserManager(BaseUserManager):
@@ -24,7 +25,6 @@ class UserManager(BaseUserManager):
         password=None,
         **kwargs
     ):
-
         serializers = kwargs.get('serializers', None)
         email = self.normalize_email(
             email) if email is not None else None
@@ -63,6 +63,27 @@ class UserManager(BaseUserManager):
 
         user.set_password(password)
         user.save(using=self._db)
+
+        verify_email_token = VerifyEmailToken(user=user)
+        verify_email_token.save()
+
+        mail_message = \
+            'Hallo ' + user.first_name + '!' \
+            '<br><br>Herzlich willkommen beim Kundenportal von SPARDA Versicherungsservice.' \
+            '<br><br>Um deine E-Mail Adresse zu bestätigen, klick bitte auf folgenden Button:' \
+            '<br><a href="https://app.spardaplus.at/?v=' + str(verify_email_token.token) + \
+            '">https://app.spardaplus.at/?v=' + \
+            str(verify_email_token.token) + '</a>'
+
+        send_mail(
+            'Willkommen beim SPARDA Versicherungsportal!',
+            mail_message,
+            None,
+            ['simon@pra.st'],
+            fail_silently=False,
+            html_message=mail_message
+        )
+
         return user
 
     def create_superuser(
@@ -104,12 +125,12 @@ class User(AbstractBaseUser):
         upload_to=create_path, null=True, blank=True
     )
 
-    first_name = models.CharField(max_length=255, null=True)
-    last_name = models.CharField(max_length=255, null=True)
+    first_name = models.CharField(max_length=255, null=True, blank=True)
+    last_name = models.CharField(max_length=255, null=True, blank=True)
     # customer_id = models.CharField(max_length=128, null=True)
 
     # Contact info
-    phone = models.CharField(max_length=255, null=True)
+    phone = models.CharField(max_length=255, null=True, blank=True)
 
     # Address
     address_1 = models.CharField(max_length=255, null=True, blank=False)
@@ -157,6 +178,12 @@ class User(AbstractBaseUser):
     def save(self, *args, **kwargs):
         if self.username != self.email and self.username == settings.ADMIN_USER:
             self.username = self.email
+
+        if self.utype < 7:
+            self.is_admin = False
+
+        if self.utype >= 7:
+            self.is_admin = True
         super(User, self).save(*args, **kwargs)
 
 
@@ -191,3 +218,15 @@ def check_phone_number(number):
 
     # e.g. +436641234567
     return '+' + str(n.country_code) + str(n.national_number)
+
+
+class VerifyEmailToken(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE
+    )
+    token = models.UUIDField(
+        default=uuid.uuid4
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
