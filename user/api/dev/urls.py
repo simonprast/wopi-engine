@@ -31,6 +31,12 @@ urlpatterns = [
     # POST - request a verification token for the current email address
     path('verify-mail/request/', api_views.RequestEmailVerification.as_view()),
 
+    # POST - change a user's password using a token
+    path('password/reset/<uuid:token>/', api_views.ResetPassword.as_view()),
+
+    # POST - request a password reset token to be sent to the user's email address
+    path('password/request/', api_views.RequestPasswordReset.as_view()),
+
     # Todo:
     # https://stackoverflow.com/questions/14567586/token-authentication-for-restful-api-should-the-token-be-periodically-changed
     path('auth/', obtain_auth_token, name='api_token_auth'),

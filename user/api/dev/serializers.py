@@ -110,8 +110,8 @@ class ChangeUserSerializer(serializers.ModelSerializer):
                 'Hallo ' + instance.first_name + '!' \
                 '<br><br>Deine E-Mail Adresse wurde geändert.' \
                 '<br><br>Um deine E-Mail Adresse zu bestätigen, klick bitte auf folgenden Link:' \
-                '<br><a href="https://app.spardaplus.at/?v=' + str(verify_email_token.token) + \
-                '">https://app.spardaplus.at/?v=' + \
+                '<br><a href="https://app.spardaplus.at/v?token=' + str(verify_email_token.token) + \
+                '">https://app.spardaplus.at/v?token=' + \
                 str(verify_email_token.token) + '</a>'
 
             send_mail(

@@ -28,13 +28,13 @@ def create_or_login(regSerializer, logSerializer, request, validated=False):
                 raise serializers.ValidationError(
                     register_serializer.errors)
 
-            if register_serializer.is_valid():
-                # Creates the user using User.objects.create_user()
-                # This returns True in case the User object is succesfully created
-                user_created = register_serializer.save()
-            elif User.objects.filter(email=request.data.__getitem__('email')).count() == 0:
-                raise serializers.ValidationError(
-                    register_serializer.errors)
+        if register_serializer.is_valid():
+            # Creates the user using User.objects.create_user()
+            # This returns True in case the User object is succesfully created
+            user_created = register_serializer.save()
+        elif User.objects.filter(email=request.data.__getitem__('email')).count() == 0:
+            raise serializers.ValidationError(
+                register_serializer.errors)
 
     # Authenticate the newly created user
     # OR authenticate the existing user with given username and password combination.

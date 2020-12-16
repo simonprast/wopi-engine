@@ -11,7 +11,7 @@ from django.contrib.auth.models import Group
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 
-from .models import User, VerifyEmailToken
+from .models import ResetPasswordToken, User, VerifyEmailToken
 
 
 class UserCreationForm(forms.ModelForm):
@@ -197,3 +197,29 @@ class EmailTokenAdmin(BaseUserAdmin):
 
 
 admin.site.register(VerifyEmailToken, EmailTokenAdmin)
+
+
+class PasswordTokenAdmin(BaseUserAdmin):
+    # form = EmailTokenChangeForm
+    # add_form = UserCreationForm
+
+    list_display = ("user", "token")
+    list_filter = ()
+    fieldsets = (
+        (
+            None,
+            {
+                "fields": (
+                    "user",
+                    "token"
+                )
+            }
+        ),
+    )
+
+    search_fields = ("user", "token")
+    ordering = ("user", "token")
+    filter_horizontal = ()
+
+
+admin.site.register(ResetPasswordToken, PasswordTokenAdmin)

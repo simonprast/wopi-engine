@@ -71,15 +71,15 @@ class UserManager(BaseUserManager):
             'Hallo ' + user.first_name + '!' \
             '<br><br>Herzlich willkommen beim Kundenportal von SPARDA Versicherungsservice.' \
             '<br><br>Um deine E-Mail Adresse zu bestätigen, klick bitte auf folgenden Button:' \
-            '<br><a href="https://app.spardaplus.at/?v=' + str(verify_email_token.token) + \
-            '">https://app.spardaplus.at/?v=' + \
+            '<br><a href="https://app.spardaplus.at/v?token=' + str(verify_email_token.token) + \
+            '">https://app.spardaplus.at/v?token=' + \
             str(verify_email_token.token) + '</a>'
 
         send_mail(
             'Willkommen beim SPARDA Versicherungsportal!',
             mail_message,
             None,
-            [self.email],
+            [user.email],
             fail_silently=False,
             html_message=mail_message
         )
@@ -221,6 +221,18 @@ def check_phone_number(number):
 
 
 class VerifyEmailToken(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE
+    )
+    token = models.UUIDField(
+        default=uuid.uuid4
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+
+class ResetPasswordToken(models.Model):
     user = models.ForeignKey(
         User, on_delete=models.CASCADE
     )
