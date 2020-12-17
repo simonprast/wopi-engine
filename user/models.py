@@ -113,7 +113,7 @@ def create_path(instance, filename):
 
 class User(AbstractBaseUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    username = models.CharField(max_length=40, unique=True)
+    username = models.CharField(max_length=40, unique=True, blank=True)
     email = models.EmailField(
         verbose_name="Email Address", max_length=320, unique=True)
     utype = models.IntegerField(verbose_name="User Type", default=0)
@@ -176,7 +176,7 @@ class User(AbstractBaseUser):
         return self.is_admin
 
     def save(self, *args, **kwargs):
-        if self.username != self.email and self.username == settings.ADMIN_USER:
+        if self.username != self.email and self.username != settings.ADMIN_USER:
             self.username = self.email
 
         if self.utype < 7:
@@ -190,7 +190,7 @@ class User(AbstractBaseUser):
 def create_admin_user():
     # This is called within the root URLs file at francy.urls, because, at this point, all modules / the user module is
     # already loaded. This function ensures that a default administrative user account exists.
-    # Username and password are set according to environment variables ADMIN_USER and ADMIN_PASSWORD.
+    # Username, email and password are set according to environment variables ADMIN_USER, ADMIN_MAIL and ADMIN_PASSWORD.
     # CAUTION! When changing ADMIN_USER at runtime, the old ADMIN_USER account is not automatically deleted.
 
     if User.objects.filter(username=settings.ADMIN_USER).exists():
