@@ -48,6 +48,7 @@ urlpatterns = [
     # - MAJOR version when you make incompatible API changes,
     # - MINOR version when you add functionality in a backwards compatible manner, and
     # - PATCH version when you make backwards compatible bug fixes.
+    path('api/1.0.0/', include('api.1.urls')),
 
     # path('api/v1/', include('user.api.v1.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

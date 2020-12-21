@@ -45,7 +45,7 @@ ADMIN_MAIL = 'simon@pra.st'
 ADMIN_PASSWORD = 'admin'
 
 # LTS API version
-VERSION = '0.1.0'
+VERSION = '1.0.0'
 
 
 # Application definition
