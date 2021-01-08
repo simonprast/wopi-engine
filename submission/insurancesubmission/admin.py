@@ -30,8 +30,8 @@ class InsuranceSubmissionAdmin(admin.ModelAdmin):
     form = InsuranceSubmissionChangeForm
     add_form = InsuranceSubmissionCreationForm
 
-    list_display = ("id", "insurance", "submitter", "active")
-    list_filter = ("insurance", "submitter", "active")
+    list_display = ("id", "insurance", "submitter", "active", "denied")
+    list_filter = ("insurance", "submitter", "active", "denied")
     fieldsets = (
         (None, {"fields": ("insurance", "submitter", "active", "denied", "policy_id")}),
         ("Data", {"fields": ("data",)}),
@@ -43,8 +43,8 @@ class InsuranceSubmissionAdmin(admin.ModelAdmin):
             "fields": ("insurance", "submitter", "data")}
          ),
     )
-    search_fields = ("insurance", "submitter")
-    ordering = ("insurance", "submitter")
+    search_fields = ("id", "insurance", "submitter")
+    ordering = ("id", "insurance", "submitter")
     filter_horizontal = ()
 
 

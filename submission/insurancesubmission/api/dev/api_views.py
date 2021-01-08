@@ -116,6 +116,7 @@ class GetInsuranceSubmissions(generics.GenericAPIView):
                     'active': submission.active,
                     'denied': submission.denied
                 },
+                'document': None if not submission.policy_document else submission.policy_document.url,
                 'data': json.loads((submission.data).replace("\'", "\""))
             }
 
@@ -134,3 +135,48 @@ class GetInsuranceSubmissions(generics.GenericAPIView):
 
         submission_list = self.create_submission_list(submissions)
         return Response(submission_list, status=status.HTTP_200_OK)
+
+
+class ChangeInsuranceSubmissionDetails(generics.GenericAPIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def get_submission(self, pk):
+        try:
+            submissions = InsuranceSubmission.objects.get(pk=pk)
+            return submissions
+        except InsuranceSubmission.DoesNotExist:
+            raise exceptions.NotFound
+
+    def put(self, request, pk, *args, **kwargs):
+        # Get the requested submission
+        submission = self.get_submission(pk=pk)
+
+        if request.data.__contains__('active'):
+            active = True if request.data.get(
+                'active').lower() == 'true' else False
+            submission.active = active
+
+        if request.data.__contains__('denied'):
+            denied = True if request.data.get(
+                'denied').lower() == 'true' else False
+            submission.denied = denied
+
+        if request.data.__contains__('policy_id'):
+            if len(request.data.get('policy_id')) > 64:
+                return Response({'policy_id': 'The maximum length is 64 characters.'})
+
+            submission.policy_id = request.data.get('policy_id')
+
+        if request.data.__contains__('document'):
+            submission.policy_document = request.data.get('document')
+
+        submission.save()
+
+        return Response(
+            {
+                'policy_id': submission.policy_id,
+                'document': None if not submission.policy_document else submission.policy_document.url,
+                'active': submission.active,
+                'denied': submission.denied,
+            }, status=status.HTTP_200_OK
+        )

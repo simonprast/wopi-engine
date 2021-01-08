@@ -18,6 +18,9 @@ urlpatterns = [
     # GET - show all own insurance policies and submissions which are not denied (customer)
     # GET - show all insurance submissions (admin)
     path('show/', api_views.GetInsuranceSubmissions.as_view()),
+
+    # PUT - change an insurance submission's details
+    path('<int:pk>/change/', api_views.ChangeInsuranceSubmissionDetails.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

@@ -4,7 +4,10 @@
 # Copyright (c) 2020 - Simon Prast
 #
 
+import os
+import uuid
 
+from django.conf import settings
 from django.db import models
 
 from insurance.models import Insurance
@@ -40,9 +43,18 @@ class InsuranceSubmissionManager(models.Manager):
         return False if duplicate > 0 else True
 
 
+def create_path(instance, filename):
+    folder = 'policy/' + str(uuid.uuid4())
+    os.makedirs(os.path.join(settings.MEDIA_ROOT, folder))
+    return os.path.join(folder, filename)
+
+
 class InsuranceSubmission(models.Model):
     insurance = models.ForeignKey(
         Insurance, on_delete=models.SET_NULL, blank=True, null=True
+    )
+    policy_document = models.FileField(
+        upload_to=create_path, null=True, blank=True
     )
     submitter = models.ForeignKey(
         User, on_delete=models.SET_NULL, blank=True, null=True
