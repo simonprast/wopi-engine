@@ -10,8 +10,9 @@ import uuid
 
 from django.conf import settings
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser
-from django.core.mail import send_mail
 from django.db import models
+
+from mail_templated import EmailMessage
 
 
 class UserManager(BaseUserManager):
@@ -67,22 +68,21 @@ class UserManager(BaseUserManager):
         verify_email_token = VerifyEmailToken(user=user)
         verify_email_token.save()
 
-        mail_message = \
-            'Hallo ' + user.first_name + '!' \
-            '<br><br>Herzlich willkommen beim Kundenportal von SPARDA Versicherungsservice.' \
-            '<br><br>Um deine E-Mail Adresse zu bestätigen, klick bitte auf folgenden Button:' \
-            '<br><a href="https://app.spardaplus.at/v?token=' + str(verify_email_token.token) + \
-            '">https://app.spardaplus.at/v?token=' + \
-            str(verify_email_token.token) + '</a>'
+        # Todo: Remove mail sending from models to views
+        if user.first_name:
+            mail_context = {
+                'user': user,
+                'token': verify_email_token.token
+            }
 
-        send_mail(
-            'Willkommen beim SPARDA Versicherungsportal!',
-            mail_message,
-            None,
-            [user.email],
-            fail_silently=False,
-            html_message=mail_message
-        )
+            mail_message = EmailMessage(
+                'mailing/registration-german.tpl',
+                mail_context,
+                None,
+                [user.email]
+            )
+
+            mail_message.send()
 
         return user
 
@@ -184,6 +184,7 @@ class User(AbstractBaseUser):
 
         if self.utype >= 7:
             self.is_admin = True
+
         super(User, self).save(*args, **kwargs)
 
 

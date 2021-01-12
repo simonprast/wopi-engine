@@ -62,6 +62,9 @@ INSTALLED_APPS = [
     # For validating phone numbers
     'phonenumbers',
 
+    # Advanced mail templates
+    'mail_templated',
+
     # REST API
     'rest_framework',
     'rest_framework.authtoken',
@@ -107,7 +110,9 @@ REST_FRAMEWORK = {
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates').replace('\\', '/'),
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

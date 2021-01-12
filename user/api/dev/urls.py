@@ -19,7 +19,7 @@ urlpatterns = [
     # GET - show details of a specific user (admin)
     # GET - show details of a specific user (customer - if the requested user is the customer itself)
     # PUT - change a specific user's data (admin)
-    # PUT - change a specific user's data (customer - if the requsted user is the customer itself)
+    # PUT - change a specific user's data (customer - if the requested user is the customer itself)
     path('<uuid:pk>/', api_views.UserDetail.as_view()),
 
     # POST - create a new user or authenticate an existing user

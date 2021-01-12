@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 
 from django.db.models import Q
 
+from mail_templated import EmailMessage
+
 from rest_framework import exceptions, generics, permissions, status
 from rest_framework.response import Response
 
@@ -158,6 +160,20 @@ class SendMessage(generics.GenericAPIView):
             for image in request.data.getlist('images'):
                 img = Image(image=image, message=message)
                 img.save()
+
+        if sender.is_staff:
+            mail_context = {
+                'user': report.submitter
+            }
+
+            mail_message = EmailMessage(
+                'mailing/new-message-german.tpl',
+                mail_context,
+                None,
+                [report.submitter.email]
+            )
+
+            mail_message.send()
 
         message_dict = {
             'message': message.message_body

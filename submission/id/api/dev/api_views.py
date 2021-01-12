@@ -5,13 +5,15 @@
 #
 
 
+from mail_templated import EmailMessage
+
 from rest_framework import exceptions, generics, permissions, status
 from rest_framework.response import Response
 
+from submission.id.models import IDSubmission
+
 from user.create_or_login import validated_user_data
 from user.models import User
-
-from submission.id.models import IDSubmission
 
 from .serializers import IDSubmissionSerializer
 
@@ -68,12 +70,26 @@ class VerifyDocument(generics.GenericAPIView):
             if type(request.data.get('verified')) == bool:
                 # Set the varified status of the id
                 verified = request.data.get('verified')
+                user = submission.submitter
+
+                if submission.verified is False and verified is True:
+                    mail_context = {
+                        'user': user
+                    }
+
+                    mail_message = EmailMessage(
+                        'mailing/verify-id-german.tpl',
+                        mail_context,
+                        None,
+                        [user.email]
+                    )
+
+                    mail_message.send()
+
                 submission.verified = verified
                 submission.save()
 
                 # Following lines are refreshing the user's data, in case any user keys are given
-                user = submission.submitter
-
                 # Ensure that the given user arguments are valid and set the values accordingly
                 first_name, last_name, email, phone, password = validated_user_data(
                     request.data, change=True)

@@ -9,7 +9,7 @@ import json
 
 from datetime import datetime, timezone
 
-from django.core.mail import send_mail
+from mail_templated import EmailMessage
 
 from rest_framework import exceptions, generics, mixins, permissions, status
 from rest_framework.response import Response
@@ -427,13 +427,6 @@ class RequestEmailVerification(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        if request.user.is_anonymous:
-            # Deny any request thats not from an AnonymousUser
-            return Response(
-                {'PermissionDenied': 'You must be authenticated in order to verify your email address.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-
         current_tokens = VerifyEmailToken.objects.filter(user=request.user)
 
         if current_tokens.count() > 0:
@@ -451,22 +444,19 @@ class RequestEmailVerification(generics.GenericAPIView):
         verify_email_token = VerifyEmailToken(user=request.user)
         verify_email_token.save()
 
-        mail_message = \
-            'Hallo ' + request.user.first_name + '!' \
-            '<br><br>Hier ist die Mail zum Bestätigen deiner E-Mail Adresse.' \
-            '<br><br>Um deine E-Mail Adresse zu bestätigen, klick bitte auf folgenden Link:' \
-            '<br><a href="https://app.spardaplus.at/v?token=' + str(verify_email_token.token) + \
-            '">https://app.spardaplus.at/v?token=' + \
-            str(verify_email_token.token) + '</a>'
+        mail_context = {
+            'user': request.user,
+            'token': verify_email_token.token
+        }
 
-        send_mail(
-            'Bestätigung Deiner E-Mail Adresse',
-            mail_message,
+        mail_message = EmailMessage(
+            'mailing/verify-email-german.tpl',
+            mail_context,
             None,
-            [request.user.email],
-            fail_silently=False,
-            html_message=mail_message
+            [request.user.email]
         )
+
+        mail_message.send()
 
         return Response(
             {'success': 'E-Mail was sent to the user.'},
@@ -585,22 +575,19 @@ class RequestPasswordReset(generics.GenericAPIView):
         reset_password_token = ResetPasswordToken(user=user)
         reset_password_token.save()
 
-        mail_message = \
-            'Hallo ' + user.first_name + '!' \
-            '<br><br>Wir haben eine Anfrage erhalten, Dein Passwort für das SPARDA-Kundenportal zurückzusetzen.' \
-            '<br><br>Unter diesem Link kannst Du ein neues Passwort festlegen:' \
-            '<br><a href="https://app.spardaplus.at/v?token=' + str(reset_password_token.token) + \
-            '">https://app.spardaplus.at/v?token=' + str(reset_password_token.token) + '</a>' \
-            '<br><br>Mit freundlichen Grüßen<br>Dein SPARDA Team'
+        mail_context = {
+            'user': user,
+            'token': reset_password_token.token
+        }
 
-        send_mail(
-            'Zurücksetzen deines SPARDA-Passworts',
-            mail_message,
+        mail_message = EmailMessage(
+            'mailing/request-password-reset-german.tpl',
+            mail_context,
             None,
-            [user.email],
-            fail_silently=False,
-            html_message=mail_message
+            [user.email]
         )
+
+        mail_message.send()
 
         return Response(
             {'success': 'E-Mail was sent to the user.'},
