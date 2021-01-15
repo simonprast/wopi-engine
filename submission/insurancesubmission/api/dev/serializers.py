@@ -36,7 +36,7 @@ def field_validation(initial_data):
         f_type = field['field_type']
 
         # Set required to False if it's not specificly defined in the insurance's field
-        f_required = field['required'] if 'required' in field else False
+        f_required = field['required'] if 'required' in field else True
         if f_required is not True and f_required is not False:
             # Raise a ValidationError when 'required' is neither True nor False
             raise serializers.ValidationError(
@@ -90,6 +90,7 @@ def field_validation(initial_data):
                 # try/except is slow, though (Know a better solution?)
                 try:
                     float(content)
+                    content = float(content)
                 except ValueError:
                     errors.update(
                         {f_key: ['\'' + content + '\' seems to be not a number.']})
@@ -112,6 +113,7 @@ def field_validation(initial_data):
             elif f_type == 'number':
                 try:
                     float(content)
+                    content = float(content)
                 except ValueError:
                     errors.update(
                         {f_key: ['\'' + content + '\' seems to be not a number.']})
@@ -143,6 +145,13 @@ def field_validation(initial_data):
                     errors.update(
                         {f_key: ['Birthdate must be in format DD-MM-YYYY. Value: ' + content]})
 
+            # Check if the field only allows a set of values, and if so, check if the field's value is allowed
+            if 'options' in field:
+                if content not in field['options']:
+                    errors.update(
+                        {f_key: ['The value is not an option for this field. Value: ' + str(content) +
+                                 ', Options: ' + str(field['options'])]})
+
             # Create a basic dictionary using the content validated above
             f_valid = {
                 'field_name': f_key,
@@ -153,7 +162,8 @@ def field_validation(initial_data):
             # Append the dictionary to the list of valid content dictionaries
             validated_data.append(f_valid)
         else:
-            if f_required is True:
+            # Simon 1/14: Please do not use the required tag until this comment is removed
+            if f_required is not False:
                 errors.update({f_key: ['This field is required.']})
 
     # If any errors are in the error dictionary, raise those errors
