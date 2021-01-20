@@ -14,4 +14,5 @@ urlpatterns = [
     path('damagereport/', include('submission.damagereport.api.dev.urls')),
     path('id/', include('submission.id.api.dev.urls')),
     path('insurance/', include('submission.insurancesubmission.api.dev.urls')),
+    path('calculate/', include('insurance.api.dev.urls'))
 ]

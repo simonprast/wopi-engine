@@ -1,0 +1,6 @@
+{
+    "id": "household_wien_extra",
+    "name": "Haushaltsversicherung Premium der Wiener Städtischen",
+    "year_min_price": 60,
+    "month_min_price": 11
+}

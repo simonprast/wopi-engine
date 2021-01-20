@@ -1,6 +1,9 @@
+import json
+import re
+
 from django.test import TestCase
 
-from insurance.haushaltsversicherung.insurance_calc import calc_insurance
+from insurance.insurance_calc import calc_insurance
 from insurance.haushaltsversicherung.haushaltsversicherung_calc import do_calculate
 
 from submission.insurancesubmission.models import InsuranceSubmission
@@ -28,7 +31,7 @@ class CalculationTestCase(TestCase):
             {
                 'field_name': 'glas',
                 'field_title': 'Auf Glasbruch verzichten',
-                'field_content': 0
+                'field_content': 1
             },
             {
                 'field_name': 'zweitein',
@@ -52,8 +55,14 @@ class CalculationTestCase(TestCase):
 
     def test_calculate(self):
         submission_obj = InsuranceSubmission.objects.get(pk=1)
-        price = calc_insurance('haushaltsversicherung_vars.json',
-                               'haushaltsversicherung_fields.json',
+
+        p = re.compile('(?<!\\\\)\'')
+        json_data_string = p.sub('\"', submission_obj.data)
+        submission_data = json.loads(json_data_string)
+
+        price = calc_insurance('haushaltsversicherung/haushaltsversicherung_vars.json',
+                               'haushaltsversicherung/haushaltsversicherung_fields.json',
+                               'haushaltsversicherung/haushaltsversicherung_meta.json',
                                do_calculate,
-                               submission_obj)
+                               submission_data)
         print(price)

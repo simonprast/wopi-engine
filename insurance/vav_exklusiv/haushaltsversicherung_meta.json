@@ -1,0 +1,7 @@
+{
+    "id": "household_vav_exklusiv",
+    "name": "Haushaltsversicherung Exklusiv VAV",
+    "year_min_price": 50,
+    "quarter_min_price": 12,
+    "month_min_price": 4
+}

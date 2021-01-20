@@ -1,0 +1,44 @@
+{
+  "pauschalwert_m2": 1100,
+  "clusterfaktor": 1.44976,
+  "policy": {
+    "individuell": 1.06,
+    "exklusiv": 1.272,
+    "topexklusiv": 1.431
+  },
+  "fahrlaessigkeit": {
+    "0": 1,
+    "1": 2
+  },
+  "staendigbewohnt": {
+    "0": 1,
+    "1": 2,
+    "2": 2
+  },
+  "publicworker": {
+    "0": 1,
+    "1": 0.95
+  },
+  "mehrspartenbonus": {
+    "0": 1,
+    "1": 0.9
+  },
+  "alarmanlage": {
+    "0": 1,
+    "1": 0.9
+  },
+  "extrasecurity": {
+    "0": 1,
+    "1": 0.925
+  },
+  "selbstbehaltsnachlass": {
+    "0": 1,
+    "1": 0.9,
+    "2": 0.8,
+    "3": 0.7
+  },
+  "shortterm": {
+    "0": 1,
+    "1": 1.05
+  }
+}
