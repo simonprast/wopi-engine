@@ -36,7 +36,7 @@ class HandleDocument(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         if request.user.is_staff:
             submissions = IDSubmission.objects.filter(
-                verified=False, latest=True)
+                verified=False, latest=True, denied=False)
             serializer = IDSubmissionSerializer(submissions, many=True)
             return Response(serializer.data)
         else:
@@ -94,11 +94,12 @@ class VerifyDocument(generics.GenericAPIView):
                 first_name, last_name, email, phone, password = validated_user_data(
                     request.data, change=True)
 
-                user.first_name = self.first_name or user.first_name
-                user.last_name = self.last_name or user.last_name
-                user.email = self.email or user.email
-                user.phone = self.phone or user.phone
-                user.set_password(self.password)
+                user.first_name = first_name or user.first_name
+                user.last_name = last_name or user.last_name
+                user.email = email or user.email
+                user.phone = phone or user.phone
+                if password:
+                    user.set_password(password)
                 user.save()
 
                 return Response({'success': True, 'verified': verified, 'submission': str(submission)},

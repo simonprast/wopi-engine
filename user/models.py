@@ -125,6 +125,15 @@ class User(AbstractBaseUser):
         upload_to=create_path, null=True, blank=True
     )
 
+    sex_choices = [
+        ('m', 'male'),
+        ('f', 'female'),
+        ('o', 'other')
+    ]
+
+    sex = models.CharField(
+        max_length=1, choices=sex_choices, null=True, blank=True)
+
     first_name = models.CharField(max_length=255, null=True, blank=True)
     last_name = models.CharField(max_length=255, null=True, blank=True)
     # customer_id = models.CharField(max_length=128, null=True)

@@ -59,6 +59,7 @@ class ChangeUserSerializer(serializers.ModelSerializer):
     advisor = serializers.UUIDField(required=False)
     first_name = serializers.CharField(required=False)
     last_name = serializers.CharField(required=False)
+    sex = serializers.CharField(required=False)
     email = serializers.CharField(required=False)
     phone = serializers.CharField(required=False)
     address_1 = serializers.CharField(required=False)
@@ -78,6 +79,7 @@ class ChangeUserSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance.first_name = self.first_name or instance.first_name
         instance.last_name = self.last_name or instance.last_name
+        instance.sex = self.sex or instance.sex
         old_email = instance.email
         instance.email = self.email or instance.email
         instance.phone = self.phone or instance.phone
@@ -131,6 +133,7 @@ class ChangeUserSerializer(serializers.ModelSerializer):
         fields = [
             'first_name',
             'last_name',
+            'sex',
             'email',
             'phone',
             'advisor',
