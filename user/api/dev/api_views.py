@@ -223,7 +223,8 @@ def create_basic_user_dict(user):
     if doc:
         doc_dict = {
             'id': doc.id,
-            'verified': doc.verified
+            'verified': doc.verified,
+            'denied': doc.denied
         }
 
         user_dict.update({

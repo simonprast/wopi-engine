@@ -16,6 +16,7 @@ class IDSubmissionSerializer(serializers.Serializer):
     document = serializers.ImageField()
     verified = serializers.BooleanField(required=False)
     latest = serializers.BooleanField(required=False)
+    denied = serializers.BooleanField(required=False)
 
     def save(self, user):
         submission = IDSubmission.objects.create_submission(
