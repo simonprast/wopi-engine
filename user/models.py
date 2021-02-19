@@ -125,6 +125,8 @@ class User(AbstractBaseUser):
         upload_to=create_path, null=True, blank=True
     )
 
+    birthdate = models.DateField(null=True, blank=True)
+
     sex_choices = [
         ('m', 'male'),
         ('f', 'female'),

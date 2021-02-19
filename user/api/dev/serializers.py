@@ -60,6 +60,7 @@ class ChangeUserSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(required=False)
     last_name = serializers.CharField(required=False)
     sex = serializers.CharField(required=False)
+    birthdate = serializers.DateField(required=False)
     email = serializers.CharField(required=False)
     phone = serializers.CharField(required=False)
     address_1 = serializers.CharField(required=False)
@@ -74,12 +75,16 @@ class ChangeUserSerializer(serializers.ModelSerializer):
         # Ensure that the given user arguments are valid and set the values accordingly
         self.first_name, self.last_name, self.email, self.phone, self.password = validated_user_data(
             self.initial_data, change=change)
+
+        self.sex = self.initial_data['sex'] if 'sex' in self.initial_data else None
+        self.birthdate = self.initial_data['birthdate'] if 'birthdate' in self.initial_data else None
         return value
 
     def update(self, instance, validated_data):
         instance.first_name = self.first_name or instance.first_name
         instance.last_name = self.last_name or instance.last_name
         instance.sex = self.sex or instance.sex
+        instance.birthdate = self.birthdate or instance.birthdate
         old_email = instance.email
         instance.email = self.email or instance.email
         instance.phone = self.phone or instance.phone
@@ -134,6 +139,7 @@ class ChangeUserSerializer(serializers.ModelSerializer):
             'first_name',
             'last_name',
             'sex',
+            'birthdate',
             'email',
             'phone',
             'advisor',

@@ -178,6 +178,7 @@ def create_basic_user_dict(user):
         'first_name': user.first_name,
         'last_name': user.last_name,
         'sex': user.sex,
+        'birthdate': user.birthdate,
         'phone': user.phone,
         'utype': user.utype,
         'verified': user.verified
@@ -262,6 +263,7 @@ def create_user_dict(user):
         'first_name': user.first_name,
         'last_name': user.last_name,
         'sex': user.sex,
+        'birthdate': user.birthdate,
         'phone': user.phone,
         'address1': user.address_1,
         'address2': user.address_2,

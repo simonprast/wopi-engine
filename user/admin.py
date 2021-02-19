@@ -87,6 +87,8 @@ class UserAdmin(BaseUserAdmin):
                 "fields": (
                     "first_name",
                     "last_name",
+                    "sex",
+                    "birthdate",
                     "phone"
                 )
             }
@@ -128,6 +130,8 @@ class UserAdmin(BaseUserAdmin):
                 "fields": (
                     "first_name",
                     "last_name",
+                    "sex",
+                    "birthdate",
                     "phone"
                 )
             }
