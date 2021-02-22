@@ -12,8 +12,9 @@ from rest_framework.response import Response
 
 from submission.id.models import IDSubmission
 
-from user.create_or_login import validated_user_data
 from user.models import User
+
+from user.api.dev.serializers import ChangeUserSerializer
 
 from .serializers import IDSubmissionSerializer
 
@@ -54,6 +55,11 @@ class HandleDocument(generics.GenericAPIView):
 
 class VerifyDocument(generics.GenericAPIView):
     queryset = IDSubmission.objects.all()
+    # Using the user.api.<v>.ChangeUserSerializer, as the context attribute
+    # is included when calling the serializer using self.get_serializer().
+    # The context attribute is needed for identifying the request method.
+    # (Alter user data on ID verification)
+    serializer_class = ChangeUserSerializer
     permission_classes = [permissions.IsAdminUser]
 
     def get_object(self, pk):
@@ -66,49 +72,67 @@ class VerifyDocument(generics.GenericAPIView):
     # PUT - set verified field value of a specific ID object (admin)
     def put(self, request, pk, *args, **kwargs):
         submission = self.get_object(pk=pk)
-        if request.data.__contains__('verified'):
-            if type(request.data.get('verified')) == bool:
-                # Set the varified status of the id
-                verified = request.data.get('verified')
-                user = submission.submitter
+        user = submission.submitter
 
-                if submission.verified is False and verified is True:
-                    mail_context = {
-                        'user': user
-                    }
+        if request.data.__contains__('verified') or request.data.__contains__('denied'):
+            if request.data.__contains__('denied'):
+                if type(request.data.get('denied')) == bool:
+                    # Set the denied status of the id
+                    denied = request.data.get('denied')
 
-                    mail_message = EmailMessage(
-                        'mailing/verify-id-german.tpl',
-                        mail_context,
-                        None,
-                        [user.email]
-                    )
+                    # Todo: Mail Sending
 
-                    mail_message.send()
-
-                submission.verified = verified
-                submission.save()
-
-                # Following lines are refreshing the user's data, in case any user keys are given
-                # Ensure that the given user arguments are valid and set the values accordingly
-                first_name, last_name, email, phone, password = validated_user_data(
-                    request.data, change=True)
-
-                user.first_name = first_name or user.first_name
-                user.last_name = last_name or user.last_name
-                user.email = email or user.email
-                user.phone = phone or user.phone
-                if password:
-                    user.set_password(password)
-                user.save()
-
-                return Response({'success': True, 'verified': verified, 'submission': str(submission)},
-                                status=status.HTTP_200_OK)
+                    submission.denied = denied
+                else:
+                    return Response({'denied': ['Value must be a bool.']}, status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response({'verified': ['Value must be a bool.']}, status=status.HTTP_400_BAD_REQUEST)
+                denied = submission.denied
+
+            if request.data.__contains__('verified'):
+                if type(request.data.get('verified')) == bool:
+                    # Set the varified status of the id
+                    verified = request.data.get('verified')
+
+                    if submission.verified is False and verified is True:
+                        mail_context = {
+                            'user': user
+                        }
+
+                        mail_message = EmailMessage(
+                            'mailing/verify-id-german.tpl',
+                            mail_context,
+                            None,
+                            [user.email]
+                        )
+
+                        mail_message.send()
+
+                    submission.verified = verified
+                else:
+                    return Response({'verified': ['Value must be a bool.']}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                verified = submission.verified
+
+            submission.save()
+
+            # Update the user object using the ChangeUserSerializer.
+            partial = kwargs.pop('partial', False)
+            instance = user
+            serializer = self.get_serializer(
+                instance, data=request.data, partial=partial)
+            serializer.is_valid(raise_exception=True)
+            user, new_password = serializer.update(
+                instance, serializer.validated_data)
+
+            if user == "AdvisorDoesNotExist":
+                return Response({'advisor_does_not_exist': 'No advisor with given UUID found.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({'success': True, 'verified': verified, 'denied': denied, 'submission': str(submission),
+                             'user': serializer.data}, status=status.HTTP_200_OK)
         else:
             return Response(
-                {'verified': ['This field is required.']}, status=status.HTTP_400_BAD_REQUEST)
+                {'verified or denied': ['This field is required.']}, status=status.HTTP_400_BAD_REQUEST)
         return Response({'submission_id': 'ok'})
 
 
