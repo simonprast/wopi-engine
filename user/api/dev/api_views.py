@@ -315,6 +315,7 @@ def create_user_dict(user):
     if doc:
         doc_dict = {
             'url': doc.document.url,
+            'urlback': doc.document_back.url if doc.document_back else None,
             'verified': doc.verified,
             'denied': doc.denied
         }

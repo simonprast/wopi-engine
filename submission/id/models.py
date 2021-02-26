@@ -40,6 +40,9 @@ class IDSubmission(models.Model):
     document = models.ImageField(
         upload_to=create_path
     )
+    document_back = models.ImageField(
+        upload_to=create_path, blank=True, null=True
+    )
     verified = models.BooleanField(default=False)
     denied = models.BooleanField(default=False)
     latest = models.BooleanField(default=True)
