@@ -31,19 +31,24 @@ class IDSubmissionAdmin(admin.ModelAdmin):
     add_form = IDSubmissionCreationForm
 
     list_display = ("id", "submitter", "latest", "verified", "denied")
-    list_filter = ("submitter", "latest", "verified")
+    list_filter = ("submitter", "latest", "verified", "denied")
     fieldsets = (
-        (None, {"fields": ("submitter",
-                           "document", "latest", "verified", "denied")}),
+        (
+            None, {
+                "classes": ("wide",),
+                "fields": (
+                    "submitter",
+                    "document",
+                    "document_back",
+                    "latest",
+                    "verified",
+                    "denied"
+                )
+            }
+        ),
         # ("Data", {"fields": ("data",)}),
     )
 
-    add_fieldsets = (
-        (None, {
-            "classes": ("wide",),
-            "fields": ("submitter", "document", "verified", "denied")}
-         ),
-    )
     search_fields = ("submitter",)
     ordering = ("id", "submitter", "latest", "verified")
     filter_horizontal = ()
