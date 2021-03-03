@@ -97,6 +97,7 @@ class UserAdmin(BaseUserAdmin):
             "Permissions", {
                 "fields": (
                     "utype",
+                    "devices"
                 )
             }
         ),

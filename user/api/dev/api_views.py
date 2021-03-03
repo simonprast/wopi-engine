@@ -88,6 +88,93 @@ class UserCreateOrLogin(generics.GenericAPIView):
             return Response(return_dict, status=auth_status)
 
 
+class AddDevice(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def check_error(self, success, err, errors, device_id):
+        if not success:
+            if err == 1:
+                return Response({'error': 'A system error occured, sorry.'}, status=status.HTTP_400_BAD_REQUEST)
+            if err == 2:
+                if 'Duplicate entry' in errors:
+                    errors['Duplicate entry'].append(device_id)
+                else:
+                    errors.update(
+                        {'Duplicate entry': [device_id]}
+                    )
+
+        return errors
+
+    def post(self, request, *args, **kwargs):
+        if 'device_id' not in request.data:
+            return Response({'device_id': ['This field is required.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        request_dict = dict(request.data)
+        errors = {}
+
+        if type(request_dict['device_id']) is list:
+            if len(request_dict['device_id']) > 1:
+                return Response({'success': False, 'errors': 'Please only provide one value.'},
+                                status=status.HTTP_200_OK)
+            else:
+                device_id = request_dict['device_id'][0]
+        else:
+            device_id = request_dict['device_id']
+
+        success, err = request.user.add_device(device_id)
+        errors = self.check_error(success, err, errors, device_id)
+
+        return Response({'success': True, 'errors': errors}, status=status.HTTP_200_OK)
+
+
+class RemoveDevice(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def check_error(self, success, err, device_id):
+        if not success:
+            if err == 1:
+                return Response({'error': 'A system error occured, sorry.'}, status=status.HTTP_400_BAD_REQUEST)
+            if err == 2:
+                return Response({'error': 'No devices to be removed.'}, status=status.HTTP_400_BAD_REQUEST)
+            if err == 3:
+                return Response({'error': 'Device ID not found in device list.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return None
+
+    def post(self, request, *args, **kwargs):
+        if 'device_id' not in request.data:
+            return Response({'device_id': ['This field is required.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        request_dict = dict(request.data)
+
+        if type(request_dict['device_id']) is list:
+            if len(request_dict['device_id']) > 1:
+                return Response({'success': False, 'errors': 'Please only provide one value.'},
+                                status=status.HTTP_200_OK)
+            else:
+                device_id = request_dict['device_id'][0]
+        else:
+            device_id = request_dict['device_id']
+
+        success, err = request.user.remove_device(device_id)
+        errors = self.check_error(success, err, device_id)
+        print(errors)
+
+        if errors:
+            return errors
+
+        return Response({'success': True, 'errors': errors}, status=status.HTTP_200_OK)
+
+
+class GetDevices(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        devices = request.user.get_devices()
+        print(devices)
+        return Response({'success': True, 'devices': devices}, status=status.HTTP_200_OK)
+
+
 class UserDetail(mixins.RetrieveModelMixin,
                  mixins.UpdateModelMixin,
                  mixins.DestroyModelMixin,
@@ -146,7 +233,7 @@ class UserDetail(mixins.RetrieveModelMixin,
             user, new_password = serializer.update(
                 instance, serializer.validated_data)
 
-            if user == "AdvisorDoesNotExist":
+            if user == 'AdvisorDoesNotExist':
                 return Response({'advisor_does_not_exist': 'No advisor with given UUID found.'},
                                 status=status.HTTP_400_BAD_REQUEST)
 
