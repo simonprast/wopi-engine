@@ -8,6 +8,10 @@ from rest_framework import serializers
 
 
 def field_validation(initial_data):
+    # Can't proceed if no insurance key was given.
+    if 'key' not in initial_data:
+        raise serializers.ValidationError({'key': ['This field is required.']})
+
     # Get the insurance object's fields through the given 'key'
     key = initial_data['key']
     validate_key(value=key)

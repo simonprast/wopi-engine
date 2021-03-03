@@ -1,25 +1,46 @@
 [
   {
     "field_name": "groesse",
-    "field_title": "Wohnungsgröße",
+    "field_title": "Wohnungsgröße in Quadratmeter",
     "field_type": "number"
   },
   {
-    "field_name": "hochwasser",
-    "field_title": "Hochwasserschutz",
-    "field_type": "string",
+    "field_name": "hhv_zonenfaktor",
+    "field_title": "Hochwasserzone",
+    "field_type": "integer",
     "options": [
-      "a",
-      "b1",
-      "b2",
-      "c1",
-      "c2"
+      1,
+      2,
+      3,
+      4,
+      5
     ]
   },
   {
+    "field_name": "alter",
+    "field_title": "Alter des Versicherungsnehmers",
+    "field_type": "number"
+  },
+  {
+    "field_name": "vs",
+    "field_title": "Individuelle Versicherungssumme",
+    "field_type": "number",
+    "required": false
+  },
+  {
     "field_name": "staendigbewohnt",
-    "field_title": "Wohnung in nicht ständig bewohntem Gebäude außerhalb des Ortsgebiets?",
+    "field_title": "Ist das Gebäude mehr als 9 Monate im Jahr bewohnt?",
     "field_type": "integer",
+    "options": [
+      0,
+      1
+    ]
+  },
+  {
+    "field_name": "schwimmbecken",
+    "field_title": "Soll ein Schwimmbecken mitversichert werden?",
+    "field_type": "integer",
+    "required": false,
     "options": [
       0,
       1,
@@ -30,15 +51,70 @@
     "field_name": "alarmanlage",
     "field_title": "Alarmanlage beim Gebäude vorhanden?",
     "field_type": "integer",
+    "required": false,
     "options": [
       0,
       1
     ]
   },
   {
-    "field_name": "extrasecurity",
-    "field_title": "Zum Beispiel Sicherheitstüre, Brandmeldeanlage mit Direktschaltung zur Feuerwehr, ..",
+    "field_name": "sicherheitstuer",
+    "field_title": "Sicherheitstüre vorhanden?",
     "field_type": "integer",
+    "required": false,
+    "options": [
+      0,
+      1
+    ]
+  },
+  {
+    "field_name": "selbstbehaltsnachlass",
+    "field_title": "Selbstbehaltsnachlass",
+    "field_type": "integer",
+    "required": false,
+    "options": [
+      0,
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "field_name": "publicworker",
+    "field_title": "Angestellter des öffentlichen Dienstes?",
+    "field_type": "integer",
+    "required": false,
+    "options": [
+      0,
+      1
+    ]
+  },
+  {
+    "field_name": "vavmehrspartenbonus",
+    "field_title": "Aktive Versicherung bei VAV?",
+    "field_type": "integer",
+    "required": false,
+    "options": [
+      0,
+      1
+    ]
+  },
+  {
+    "field_name": "shortterm",
+    "field_title": "Verkürzte 5- oder 3-jährige Laufzeit",
+    "field_type": "integer",
+    "required": false,
+    "options": [
+      0,
+      1,
+      2
+    ]
+  },
+  {
+    "field_name": "extrasecurity",
+    "field_title": "Brandmeldeanlage mit Direktschaltung zur Feuerwehr, ..",
+    "field_type": "integer",
+    "required": false,
     "options": [
       0,
       1
@@ -48,6 +124,7 @@
     "field_name": "smarthomesecurity",
     "field_title": "Smarthome Sicherheitstechnik vorhanden? (Anschluss an Sicherheitszentrale)",
     "field_type": "integer",
+    "required": false,
     "options": [
       0,
       1
@@ -57,6 +134,7 @@
     "field_name": "glas",
     "field_title": "Auf Glasbruch verzichten",
     "field_type": "integer",
+    "required": false,
     "options": [
       0,
       1
@@ -66,6 +144,7 @@
     "field_name": "zweitein",
     "field_title": "Zweitwohnsitz oder Einpersonenhaushalt",
     "field_type": "integer",
+    "required": false,
     "options": [
       0,
       1
@@ -86,49 +165,5 @@
       "tirol",
       "vorarlberg"
     ]
-  },
-  {
-    "field_name": "selbstbehaltsnachlass",
-    "field_title": "Selbstbehaltsnachlass",
-    "field_type": "integer",
-    "options": [
-      0,
-      150,
-      200,
-      400
-    ]
-  },
-  {
-    "field_name": "publicworker",
-    "field_title": "Angestellter des öffentlichen Dienstes?",
-    "field_type": "integer",
-    "options": [
-      0,
-      1
-    ]
-  },
-  {
-    "field_name": "shortterm",
-    "field_title": "Einjährige Laufzeit?",
-    "field_type": "integer",
-    "options": [
-      0,
-      1
-    ]
-  },
-  {
-    "field_name": "vavmehrspartenbonus",
-    "field_title": "Aktive Versicherung bei VAV?",
-    "field_type": "integer",
-    "options": [
-      0,
-      1
-    ]
-  },
-  {
-    "field_name": "vs",
-    "field_title": "Versicherungssumme",
-    "field_type": "number",
-    "required": false
   }
 ]
