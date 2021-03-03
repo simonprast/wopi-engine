@@ -48,7 +48,12 @@ class DamageReportAdmin(admin.ModelAdmin):
     filter_horizontal = ()
 
     def get_policyid(self, obj):
-        return str(obj.policy.insurance) + ", " + str(obj.policy.policy_id)
+        try:
+            policy_id_str = str(obj.policy.insurance) + \
+                ", " + str(obj.policy.policy_id)
+        except AttributeError:
+            policy_id_str = 'Policy deleted'
+        return policy_id_str
     get_policyid.admin_order_field = 'policy_id'
     get_policyid.short_description = 'Policy'
 
