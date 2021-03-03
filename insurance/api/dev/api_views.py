@@ -32,7 +32,11 @@ class CalculateInsurance(generics.GenericAPIView):
 
         overview_list = []
         overview_list.append(data)
-        overview_list.append(vav_dict)
-        overview_list.append(wse_dict)
+
+        insurance_list = []
+        insurance_list.append(vav_dict)
+        insurance_list.append(wse_dict)
+
+        overview_list.append(insurance_list)
 
         return Response(overview_list, status=status.HTTP_200_OK)
