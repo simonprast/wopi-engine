@@ -284,8 +284,8 @@ class GetDamageReportDetails(generics.GenericAPIView):
 
         report_creator = report.submitter
         report_date = str(report.datetime)
-        report_policy_name = str(report.policy.insurance)
-        report_policy_id = report.policy.policy_id
+        report_policy_name = str(report.policy.insurance) if report.policy else None
+        report_policy_id = report.policy.policy_id if report.policy else None
 
         report_log.update({
             'id': report.id,
@@ -343,9 +343,9 @@ def create_report_list(self, reports):
         report_obj = {
             'id': report.id,
             'policy': {
-                'id': report.policy.id,
-                'name': str(report.policy.insurance),
-                'policy_id': report.policy.policy_id
+                'id': report.policy.id if report.policy else None,
+                'name': str(report.policy.insurance) if report.policy else None,
+                'policy_id': report.policy.policy_id if report.policy else None
             },
             'submitter': str(report.submitter),
             'status': report.status
