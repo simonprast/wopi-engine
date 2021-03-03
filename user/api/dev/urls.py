@@ -37,6 +37,15 @@ urlpatterns = [
     # POST - request a password reset token to be sent to the user's email address
     path('password/request/', api_views.RequestPasswordReset.as_view()),
 
+    # POST - add a device ID to the user object, used for sending push notifications through Firebase (customer)
+    path('devices/add/', api_views.AddDevice.as_view()),
+
+    # POST - remove a device ID from the user object (customer)
+    path('devices/remove/', api_views.RemoveDevice.as_view()),
+
+    # GET - show a list of all device IDs stored at the user object (customer)
+    path('devices/show/', api_views.GetDevices.as_view()),
+
     # Todo:
     # https://stackoverflow.com/questions/14567586/token-authentication-for-restful-api-should-the-token-be-periodically-changed
     path('auth/', obtain_auth_token, name='api_token_auth'),

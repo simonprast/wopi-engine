@@ -4,6 +4,7 @@
 # Copyright (c) 2020 - Simon Prast
 #
 
+import ast
 import os
 import phonenumbers
 import uuid
@@ -151,6 +152,9 @@ class User(AbstractBaseUser):
     # ID verification
     verified = models.BooleanField(default=False)
 
+    # Store device IDs for sending out notifications
+    devices = models.TextField(null=True, blank=True)
+
     objects = UserManager()
 
     USERNAME_FIELD = "email"
@@ -185,6 +189,41 @@ class User(AbstractBaseUser):
         "Is the user a member of staff?"
         # Simplest possible answer: All admins are staff
         return self.is_admin
+
+    def add_device(self, id):
+        if not id:
+            return False, 1
+
+        if self.devices:
+            devices = ast.literal_eval(self.devices)
+            if id in devices:
+                return False, 2
+        else:
+            devices = []
+
+        devices.append(id)
+        self.devices = devices
+        self.save()
+        return True, 0
+
+    def remove_device(self, id):
+        if not id:
+            return False, 1
+
+        if not self.devices:
+            return False, 2
+
+        if id not in self.devices:
+            return False, 3
+
+        devices = ast.literal_eval(self.devices)
+        devices.remove(id)
+        self.devices = devices
+        self.save()
+        return True, 0
+
+    def get_devices(self):
+        return ast.literal_eval(self.devices)
 
     def save(self, *args, **kwargs):
         if self.username != self.email and self.username != settings.ADMIN_USER:
