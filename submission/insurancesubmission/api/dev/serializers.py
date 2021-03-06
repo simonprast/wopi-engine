@@ -21,8 +21,15 @@ def create_data(initial_data):
     fields = json.loads(Insurance.objects.get(
         insurance_key=key).insurance_fields)
 
-    # List of dictionaries
+    # Data list containing submission meta data and field data
     data = []
+    meta_data = {}
+    field_data = []
+
+    if 'provider_id' in initial_data:
+        meta_data.update({'provider_id': initial_data['provider_id']})
+
+    data.append(meta_data)
 
     for field in fields:
         f_key = field['field_name']
@@ -40,7 +47,9 @@ def create_data(initial_data):
             }
 
             # Append the dictionary to the list of content dictionaries
-            data.append(data_field)
+            field_data.append(data_field)
+
+    data.append(field_data)
 
     return data
 
