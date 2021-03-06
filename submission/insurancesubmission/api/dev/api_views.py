@@ -110,6 +110,7 @@ class GetInsuranceSubmissions(generics.GenericAPIView):
             submission_obj = {
                 'id': submission.id,
                 'insurance': str(submission.insurance),
+                'date': str(submission.datetime),
                 'policy_id': submission.policy_id,
                 'submitter': str(submission.submitter),
                 'status': {

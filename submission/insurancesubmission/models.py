@@ -50,6 +50,9 @@ def create_path(instance, filename):
 
 
 class InsuranceSubmission(models.Model):
+    datetime = models.DateTimeField(
+        auto_now_add=True
+    )
     insurance = models.ForeignKey(
         Insurance, on_delete=models.SET_NULL, blank=True, null=True
     )
