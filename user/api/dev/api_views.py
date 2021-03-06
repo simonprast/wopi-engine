@@ -383,6 +383,7 @@ def create_user_dict(user):
         for report in reports:
             report_dict = {
                 'id': report.id,
+                'date': report.datetime,
                 'policy': {
                     'id': report.policy.id if report.policy else None,
                     'name': str(report.policy.insurance) if report.policy else None,
