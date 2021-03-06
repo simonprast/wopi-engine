@@ -151,7 +151,6 @@ class SendMessage(generics.GenericAPIView):
         try:
             message = list(Message.objects.filter(
                 report=report, sender=user))[-1]
-            print(message)
             return message
         except Message.DoesNotExist:
             raise exceptions.NotFound
@@ -189,30 +188,42 @@ class SendMessage(generics.GenericAPIView):
 
         serializer = MessageSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        message = serializer.save(user=sender, report=report)
+
+        internal = False
+
+        if request.user.is_staff:
+            if request.data.__contains__('internal'):
+                internal = request.data.get('internal')
+
+                if type(internal) is not bool:
+                    return Response({'error': 'internal must be a bool.'})
+
+        message = serializer.save(
+            user=sender, report=report, internal=internal)
 
         if request.data.__contains__('images'):
             for image in request.data.getlist('images'):
                 img = Image(image=image, message=message)
                 img.save()
 
-        if sender.is_staff:
-            mail_context = {
-                'user': report.submitter
+        if not internal:
+            if sender.is_staff:
+                mail_context = {
+                    'user': report.submitter
+                }
+
+                mail_message = EmailMessage(
+                    'mailing/new-message-german.tpl',
+                    mail_context,
+                    None,
+                    [report.submitter.email]
+                )
+
+                mail_message.send()
+
+            message_dict = {
+                'message': message.message_body
             }
-
-            mail_message = EmailMessage(
-                'mailing/new-message-german.tpl',
-                mail_context,
-                None,
-                [report.submitter.email]
-            )
-
-            mail_message.send()
-
-        message_dict = {
-            'message': message.message_body
-        }
 
         images = self.get_images(message=message)
 
@@ -332,8 +343,20 @@ class GetDamageReportDetails(generics.GenericAPIView):
             'status': report.status
         })
 
-        messages = self.get_messages(report=report)
+        if request.user.is_staff:
+            messages = self.get_messages(report=report)
+        else:
+            messages = self.get_messages(report=report, internal=False)
 
+        message_list = self.create_message_list(messages, report_creator)
+
+        report_log.update({
+            'messages': message_list
+        })
+
+        return Response(report_log)
+
+    def create_message_list(self, messages, report_creator):
         message_list = []
 
         for message in messages:
@@ -366,11 +389,7 @@ class GetDamageReportDetails(generics.GenericAPIView):
 
             message_list.append(message_dict)
 
-        report_log.update({
-            'messages': message_list
-        })
-
-        return Response(report_log)
+        return message_list
 
 
 def create_report_list(self, reports):

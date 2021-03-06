@@ -48,11 +48,12 @@ class MessageSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False)
     message = serializers.CharField()
 
-    def save(self, user, report):
+    def save(self, user, report, internal):
         message = Message(
             report=report,
             sender=user,
-            message_body=self.validated_data.get('message')
+            message_body=self.validated_data.get('message'),
+            internal=internal
         )
         message.save()
         return message

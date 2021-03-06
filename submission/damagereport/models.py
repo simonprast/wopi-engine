@@ -92,6 +92,9 @@ class Message(models.Model):
     message_body = models.TextField(
         max_length=2500
     )
+    internal = models.BooleanField(
+        default=False
+    )
 
     def save(self, *args, **kwargs):
         if self.report.submitter == self.sender:
