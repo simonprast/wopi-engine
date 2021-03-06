@@ -299,7 +299,8 @@ def create_basic_user_dict(user):
 
         for report in reports:
             report_dict = {
-                'id': report.id
+                'id': report.id,
+                'status': report.status
             }
             report_list.append(report_dict)
 
