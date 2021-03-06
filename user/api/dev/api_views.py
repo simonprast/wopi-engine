@@ -290,8 +290,8 @@ def create_basic_user_dict(user):
             }
         })
 
-    # Get basic information about waiting requests of this specific user
-    reports = DamageReport.objects.filter(submitter=user, status='w')
+    # Get all damage reports, create a list and add the list as 'damagereports' to the user_dict.
+    reports = DamageReport.objects.filter(submitter=user)
 
     if reports.count() > 0:
         report_list = []
@@ -373,10 +373,8 @@ def create_user_dict(user):
             }
         })
 
-    # Get all damage reports which were not denied by a staff member, create
-    # a list and add the list as 'damagereports' to the user_dict.
-    reports = DamageReport.objects.filter(
-        denied=False, submitter=user)
+    # Get all damage reports, create a list and add the list as 'damagereports' to the user_dict.
+    reports = DamageReport.objects.filter(submitter=user)
 
     if reports.count() > 0:
         report_list = []
