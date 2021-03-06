@@ -15,10 +15,11 @@ from user.models import User
 
 
 class IDSubmissionManager(models.Manager):
-    def create_submission(self, submitter, document):
+    def create_submission(self, submitter, document, document_back):
         id_submission = IDSubmission(
             submitter=submitter,
-            document=document
+            document=document,
+            document_back=document_back
         )
 
         id_submission.save()
