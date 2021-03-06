@@ -36,7 +36,7 @@ Hallo {{ user.first_name }}!
             <table cellspacing="0" cellpadding="0">
                 <tr>
                     <td class="button" bgcolor="#E87405">
-                        <a class="link" href="https://app.spardaplus.at/v?token={{ token }}">E-Mail Adresse bestätigen</a>
+                        <a class="link" href="https://app.spardaplus.at/verify/{{ token }}">E-Mail Adresse bestätigen</a>
                     </td>
                 </tr>
             </table>
