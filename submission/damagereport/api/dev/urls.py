@@ -17,6 +17,9 @@ urlpatterns = [
     # POST - send message to a damage report (customer/admin)
     path('submit/<int:report>/', api_views.SendMessage.as_view()),
 
+    # POST - change a damage report's status from o/w to c or back to w (admin)
+    path('close/<int:report>/', api_views.OpenCloseDamageReport.as_view()),
+
     # GET - show all own damage reports o/w/c (customer)
     # GET - show damage reports of related users (admin)
     path('show/', api_views.GetDamageReports.as_view()),

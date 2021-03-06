@@ -102,6 +102,41 @@ class SubmitDamageReport(generics.GenericAPIView):
         return Response(serializer.data)
 
 
+class OpenCloseDamageReport(generics.GenericAPIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    # POST - change a damage report's status from o/w to c or back to w (admin)
+    def post(self, request, report, *args, **kwargs):
+        report = self.get_report(pk=report)
+
+        if not report.submitter == request.user and not request.user.is_staff:
+            raise exceptions.PermissionDenied
+
+        if report.status != 'c':
+            report.status = 'o'
+
+            message = Message(
+                report=report,
+                message_body='DAMAGEREPORTCLOSEDNOWMESSAGE',
+                sender=request.user
+            )
+
+            message.save()
+
+        if report.status == 'c':
+            report.status = 'w'
+
+            message = Message(
+                report=report,
+                message_body='DAMAGEREPORTOPENEDNOWMESSAGE',
+                sender=request.user
+            )
+
+            message.save()
+
+        return Response({'status': report.status}, status=status.HTTP_200_OK)
+
+
 class SendMessage(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -284,7 +319,8 @@ class GetDamageReportDetails(generics.GenericAPIView):
 
         report_creator = report.submitter
         report_date = str(report.datetime)
-        report_policy_name = str(report.policy.insurance) if report.policy else None
+        report_policy_name = str(
+            report.policy.insurance) if report.policy else None
         report_policy_id = report.policy.policy_id if report.policy else None
 
         report_log.update({
