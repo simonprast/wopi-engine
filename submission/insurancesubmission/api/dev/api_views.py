@@ -7,6 +7,8 @@
 
 import json
 
+from django.core.files.uploadedfile import InMemoryUploadedFile
+
 from rest_framework import exceptions, generics, permissions, status
 from rest_framework.response import Response
 
@@ -115,9 +117,20 @@ class GetInsuranceSubmissions(generics.GenericAPIView):
                 'submitter': str(submission.submitter),
                 'status': {
                     'active': submission.active,
-                    'denied': submission.denied
+                    'denied': submission.denied,
+                    'status': submission.status
                 },
                 'document': None if not submission.policy_document else submission.policy_document.url,
+                'template_1': None if not submission.document_template_1 else submission.document_template_1.url,
+                'template_2': None if not submission.document_template_2 else submission.document_template_2.url,
+                'template_3': None if not submission.document_template_3 else submission.document_template_3.url,
+                'template_4': None if not submission.document_template_4 else submission.document_template_4.url,
+                'template_5': None if not submission.document_template_5 else submission.document_template_5.url,
+                'agreement_1': None if not submission.document_agreement_1 else submission.document_agreement_1.url,
+                'agreement_2': None if not submission.document_agreement_2 else submission.document_agreement_2.url,
+                'agreement_3': None if not submission.document_agreement_3 else submission.document_agreement_3.url,
+                'agreement_4': None if not submission.document_agreement_4 else submission.document_agreement_4.url,
+                'agreement_5': None if not submission.document_agreement_5 else submission.document_agreement_5.url,
                 'data': json.loads((submission.data).replace("\'", "\""))
             }
 
@@ -177,6 +190,110 @@ class ChangeInsuranceSubmissionDetails(generics.GenericAPIView):
             {
                 'policy_id': submission.policy_id,
                 'document': None if not submission.policy_document else submission.policy_document.url,
+                'active': submission.active,
+                'denied': submission.denied,
+            }, status=status.HTTP_200_OK
+        )
+
+
+class AddTemplateDocument(generics.GenericAPIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def get_submission(self, pk):
+        try:
+            submissions = InsuranceSubmission.objects.get(pk=pk)
+            return submissions
+        except InsuranceSubmission.DoesNotExist:
+            raise exceptions.NotFound
+
+    def post(self, request, pk, *args, **kwargs):
+        # Get the requested submission
+        submission = self.get_submission(pk=pk)
+
+        if submission.active:
+            return Response({'error': 'You cannot change agreement files on active contracts.'})
+
+        if request.data.__contains__('template_1') and type(request.data.get('template_1')) is InMemoryUploadedFile:
+            submission.document_template_1 = request.data.get('template_1')
+
+        if request.data.__contains__('template_2') and type(request.data.get('template_2')) is InMemoryUploadedFile:
+            submission.document_template_2 = request.data.get('template_2')
+
+        if request.data.__contains__('template_3') and type(request.data.get('template_3')) is InMemoryUploadedFile:
+            submission.document_template_3 = request.data.get('template_3')
+
+        if request.data.__contains__('template_4') and type(request.data.get('template_4')) is InMemoryUploadedFile:
+            submission.document_template_4 = request.data.get('template_4')
+
+        if request.data.__contains__('template_5') and type(request.data.get('template_5')) is InMemoryUploadedFile:
+            submission.document_template_5 = request.data.get('template_5')
+
+        submission.status = 'o'
+
+        submission.save()
+
+        return Response(
+            {
+                'policy_id': submission.policy_id,
+                'template_1': None if not submission.document_template_1 else submission.document_template_1.url,
+                'template_2': None if not submission.document_template_2 else submission.document_template_2.url,
+                'template_3': None if not submission.document_template_3 else submission.document_template_3.url,
+                'template_4': None if not submission.document_template_4 else submission.document_template_4.url,
+                'template_5': None if not submission.document_template_5 else submission.document_template_5.url,
+                'active': submission.active,
+                'denied': submission.denied,
+            }, status=status.HTTP_200_OK
+        )
+
+
+class AddSubmissionDocument(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_submission(self, pk):
+        try:
+            submissions = InsuranceSubmission.objects.get(pk=pk)
+            return submissions
+        except InsuranceSubmission.DoesNotExist:
+            raise exceptions.NotFound
+
+    def post(self, request, pk, *args, **kwargs):
+        # Get the requested submission
+        submission = self.get_submission(pk=pk)
+
+        if submission.submitter != request.user or not request.user.is_staff():
+            return Response({'error': 'You are not allowed to perform this action.'})
+
+        if submission.active:
+            return Response({'error': 'You cannot change agreement files on active contracts.'})
+
+        if request.data.__contains__('document_1') and type(request.data.get('document_1')) is InMemoryUploadedFile:
+            submission.document_submission_1 = request.data.get('document_1')
+            print(type(request.data.get('document_1')))
+
+        if request.data.__contains__('document_2') and type(request.data.get('document_2')) is InMemoryUploadedFile:
+            submission.document_submission_2 = request.data.get('document_2')
+
+        if request.data.__contains__('document_3') and type(request.data.get('document_3')) is InMemoryUploadedFile:
+            submission.document_submission_3 = request.data.get('document_3')
+
+        if request.data.__contains__('document_4') and type(request.data.get('document_4')) is InMemoryUploadedFile:
+            submission.document_submission_4 = request.data.get('document_4')
+
+        if request.data.__contains__('document_5') and type(request.data.get('document_5')) is InMemoryUploadedFile:
+            submission.document_submission_5 = request.data.get('document_5')
+
+        submission.status = 'w'
+
+        submission.save()
+
+        return Response(
+            {
+                'policy_id': submission.policy_id,
+                'document_1': None if not submission.document_submission_1 else submission.document_submission_1.url,
+                'document_2': None if not submission.document_submission_2 else submission.document_submission_2.url,
+                'document_3': None if not submission.document_submission_3 else submission.document_submission_3.url,
+                'document_4': None if not submission.document_submission_4 else submission.document_submission_4.url,
+                'document_5': None if not submission.document_submission_5 else submission.document_submission_5.url,
                 'active': submission.active,
                 'denied': submission.denied,
             }, status=status.HTTP_200_OK

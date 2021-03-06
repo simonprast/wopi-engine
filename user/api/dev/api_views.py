@@ -430,9 +430,20 @@ def create_user_dict(user):
                 'submitter': str(submission.submitter),
                 'status': {
                     'active': submission.active,
-                    'denied': submission.denied
+                    'denied': submission.denied,
+                    'status': submission.status
                 },
                 'document': None if not submission.policy_document else submission.policy_document.url,
+                'template_1': None if not submission.document_template_1 else submission.document_template_1.url,
+                'template_2': None if not submission.document_template_2 else submission.document_template_2.url,
+                'template_3': None if not submission.document_template_3 else submission.document_template_3.url,
+                'template_4': None if not submission.document_template_4 else submission.document_template_4.url,
+                'template_5': None if not submission.document_template_5 else submission.document_template_5.url,
+                'agreement_1': None if not submission.document_agreement_1 else submission.document_agreement_1.url,
+                'agreement_2': None if not submission.document_agreement_2 else submission.document_agreement_2.url,
+                'agreement_3': None if not submission.document_agreement_3 else submission.document_agreement_3.url,
+                'agreement_4': None if not submission.document_agreement_4 else submission.document_agreement_4.url,
+                'agreement_5': None if not submission.document_agreement_5 else submission.document_agreement_5.url,
                 'data': json.loads((submission.data).replace("\'", "\""))
             }
             submission_list.append(submission_dict)

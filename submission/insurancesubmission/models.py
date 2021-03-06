@@ -59,6 +59,42 @@ class InsuranceSubmission(models.Model):
     policy_document = models.FileField(
         upload_to=create_path, null=True, blank=True
     )
+
+    # This is the status field, which can either be w(aiting), o(pen), or c(losed).
+    status = models.CharField(max_length=1, default='w')
+
+    document_template_1 = models.FileField(
+        upload_to=create_path, null=True, blank=True
+    )
+    document_template_2 = models.FileField(
+        upload_to=create_path, null=True, blank=True
+    )
+    document_template_3 = models.FileField(
+        upload_to=create_path, null=True, blank=True
+    )
+    document_template_4 = models.FileField(
+        upload_to=create_path, null=True, blank=True
+    )
+    document_template_5 = models.FileField(
+        upload_to=create_path, null=True, blank=True
+    )
+
+    document_submission_1 = models.FileField(
+        upload_to=create_path, null=True, blank=True
+    )
+    document_submission_2 = models.FileField(
+        upload_to=create_path, null=True, blank=True
+    )
+    document_submission_3 = models.FileField(
+        upload_to=create_path, null=True, blank=True
+    )
+    document_submission_4 = models.FileField(
+        upload_to=create_path, null=True, blank=True
+    )
+    document_submission_5 = models.FileField(
+        upload_to=create_path, null=True, blank=True
+    )
+
     submitter = models.ForeignKey(
         User, on_delete=models.SET_NULL, blank=True, null=True
     )
