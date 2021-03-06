@@ -425,8 +425,10 @@ def create_user_dict(user):
                 'policy_id': submission.policy_id,
                 'submitter': str(submission.submitter),
                 'status': {
-                    'active': submission.active
+                    'active': submission.active,
+                    'denied': submission.denied
                 },
+                'document': None if not submission.policy_document else submission.policy_document.url,
                 'data': json.loads((submission.data).replace("\'", "\""))
             }
             submission_list.append(submission_dict)
