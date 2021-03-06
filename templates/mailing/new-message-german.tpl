@@ -1,7 +1,7 @@
 {% extends "mail_templated/base.tpl" %}
 
 {% block subject %}
-Dein Ausweis wurde bestätigt - SPARDA Versicherungen
+Neue Nachricht im Postfach - SPARDA Versicherungen
 {% endblock %}
 
 {% block html %}
