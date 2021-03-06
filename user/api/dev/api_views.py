@@ -6,6 +6,7 @@
 
 
 import json
+import urllib
 
 from datetime import datetime, timezone
 
@@ -480,7 +481,7 @@ class VerifyEmail(generics.GenericAPIView):
 
     def post(self, request, token, *args, **kwargs):
         if request.user.is_anonymous:
-            # Deny any request thats not from an AnonymousUser
+            # Deny any request thats from an AnonymousUser
             return Response(
                 {'PermissionDenied': 'You must be authenticated in order to verify your email address.'},
                 status=status.HTTP_403_FORBIDDEN
@@ -670,7 +671,8 @@ class RequestPasswordReset(generics.GenericAPIView):
 
         mail_context = {
             'user': user,
-            'token': reset_password_token.token
+            'token': reset_password_token.token,
+            'email': urllib.parse.quote_plus(request.user.email)
         }
 
         mail_message = EmailMessage(
