@@ -105,6 +105,13 @@ class SubmitDamageReport(generics.GenericAPIView):
 class OpenCloseDamageReport(generics.GenericAPIView):
     permission_classes = [permissions.IsAdminUser]
 
+    def get_report(self, pk):
+        try:
+            report = DamageReport.objects.get(pk=pk)
+            return report
+        except DamageReport.DoesNotExist:
+            raise exceptions.NotFound
+
     # POST - change a damage report's status from o/w to c or back to w (admin)
     def post(self, request, report, *args, **kwargs):
         report = self.get_report(pk=report)
@@ -309,9 +316,9 @@ class GetDamageReportDetails(generics.GenericAPIView):
         except DamageReport.DoesNotExist:
             raise exceptions.NotFound
 
-    def get_messages(self, report):
+    def get_messages(self, report, internal=False):
         try:
-            messages = Message.objects.filter(report=report)
+            messages = Message.objects.filter(report=report, internal=internal)
             return messages
         except Message.DoesNotExist:
             raise exceptions.NotFound
@@ -344,9 +351,9 @@ class GetDamageReportDetails(generics.GenericAPIView):
         })
 
         if request.user.is_staff:
-            messages = self.get_messages(report=report)
+            messages = self.get_messages(report=report, internal=True)
         else:
-            messages = self.get_messages(report=report, internal=False)
+            messages = self.get_messages(report=report)
 
         message_list = self.create_message_list(messages, report_creator)
 
