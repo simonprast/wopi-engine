@@ -120,7 +120,7 @@ class OpenCloseDamageReport(generics.GenericAPIView):
             raise exceptions.PermissionDenied
 
         if report.status != 'c':
-            report.status = 'o'
+            report.status = 'c'
 
             message = Message(
                 report=report,
