@@ -30,13 +30,15 @@ class InsuranceSubmissionAdmin(admin.ModelAdmin):
     form = InsuranceSubmissionChangeForm
     add_form = InsuranceSubmissionCreationForm
 
-    list_display = ("id", "policy_id", "insurance", "submitter", "active", "denied")
+    list_display = ("id", "policy_id", "insurance",
+                    "submitter", "active", "denied")
     list_filter = ("insurance", "submitter", "active", "denied")
     fieldsets = (
         (
             None, {
                 "classes": ("wide",),
                 "fields": (
+                    "status",
                     "insurance",
                     "submitter",
                     "policy_document",
