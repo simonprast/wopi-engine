@@ -270,8 +270,8 @@ class AddSubmissionDocument(generics.GenericAPIView):
         # Get the requested submission
         submission = self.get_submission(pk=pk)
 
-        if submission.submitter != request.user or not request.user.is_staff:
-            return Response({'error': 'You are not allowed to perform this action.'})
+        if not submission.submitter == request.user and not request.user.is_staff:
+            raise exceptions.PermissionDenied
 
         if submission.active:
             return Response({'error': 'You cannot change agreement files on active contracts.'})
