@@ -323,8 +323,7 @@ def create_basic_user_dict(user):
 
     # If the user has any unanswered insurance submissions, create a list containing
     # all unanswered submissions and add the list as 'insurances' to the user_dict.
-    insurance_submissions = get_user_submissions(
-        user=user, active=False)
+    insurance_submissions = get_user_submissions(user=user)
 
     if insurance_submissions.count() > 0:
         submission_list = []
@@ -414,8 +413,7 @@ def create_user_dict(user):
 
     # If the user has any insurance submissions, create a list containing
     # all submissions and add the list as 'insurances' to the user_dict.
-    insurance_submissions = get_user_submissions(
-        user=user)
+    insurance_submissions = get_user_submissions(user=user)
 
     if insurance_submissions.count() > 0:
         submission_list = []
