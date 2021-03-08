@@ -131,7 +131,8 @@ class GetInsuranceSubmissions(generics.GenericAPIView):
                 'agreement_3': None if not submission.document_submission_3 else submission.document_submission_3.url,
                 'agreement_4': None if not submission.document_submission_4 else submission.document_submission_4.url,
                 'agreement_5': None if not submission.document_submission_5 else submission.document_submission_5.url,
-                'data': json.loads((submission.data).replace("\'", "\""))
+                'data': json.loads((submission.data).replace("\'", "\"")),
+                'options': json.loads(translate_options())
             }
 
             submission_list.append(submission_obj)
@@ -321,3 +322,141 @@ class AddSubmissionDocument(generics.GenericAPIView):
                 'denied': submission.denied,
             }, status=status.HTTP_200_OK
         )
+
+
+def translate_options():
+    options = '''
+    [
+        {
+            "field_name": "hhv_zonenfaktor",
+            "field_type": "integer",
+            "options": {
+                "1": "Zone 1",
+                "2": "Zone 2",
+                "3": "Zone 3",
+                "4": "Zone 4",
+                "5": "Zone 5"
+            }
+        },
+        {
+            "field_name": "staendigbewohnt",
+            "field_type": "integer",
+            "options": {
+                "0": "Das Gebäude ist weniger als 9 Monate im Jahr bewohnt.",
+                "1": "Das Gebäude ist mehr als 9 Monate im Jahr bewohnt."
+            }
+        },
+        {
+            "field_name": "schwimmbecken",
+            "field_type": "integer",
+            "options": {
+                "0": "Kein Schwimmbecken mitversichern",
+                "1": "Schwimmbecken + Abdeckung mitversichern",
+                "2": "Schwimmbecken + Abdeckung + Technik mitversichern "
+            }
+        },
+        {
+            "field_name": "alarmanlage",
+            "field_type": "integer",
+            "options": {
+                "0": "Keine Alarmanlage",
+                "1": "Alarmanlage vorhanden"
+            }
+        },
+        {
+            "field_name": "sicherheitstuer",
+            "field_type": "integer",
+            "options": {
+                "0": "Keine Sicherheitstür",
+                "1": "Sicherheitstür vorhanden"
+            }
+        },
+        {
+            "field_name": "selbstbehaltsnachlass",
+            "field_type": "integer",
+            "options": {
+                "0": "Kein Selbstbehalt",
+                "1": "Nachlass-Stufe 1: 100€-150€ SB / 10%",
+                "2": "Nachlass-Stufe 2: 200€-300€ SB / 20%",
+                "3": "Nachlass-Stufe 3: 400€-500€ SB / 30%"
+            }
+        },
+        {
+            "field_name": "publicworker",
+            "field_type": "integer",
+            "options": {
+                "0": "Kein Angestellter des öffentlichen Dienstes",
+                "1": "Angestellter des öffentlichen Dienstes"
+            }
+        },
+        {
+            "field_name": "vavmehrspartenbonus",
+            "field_type": "integer",
+            "options": {
+                "0": "Kein VAV Kunde",
+                "1": "Bestehender VAV Kunde"
+            }
+        },
+        {
+            "field_name": "shortterm",
+            "field_title": "Verkürzte 5- oder 3-jährige Laufzeit",
+            "field_type": "integer",
+            "options": {
+                "0": "Keine verkürzte Laufzeit",
+                "1": "5-jährige Laufzeit gewünscht",
+                "2": "3-jährige Laufzeit gewünscht"
+            }
+        },
+        {
+            "field_name": "extrasecurity",
+            "field_title": "Brandmeldeanlage mit Direktschaltung zur Feuerwehr, ..",
+            "field_type": "integer",
+            "options": {
+                "0": "Extra Sicherheitsmaßnahmen vorhanden (Brandmeldeanlage mit Direktschaltung zur Feuerwehr, ..)",
+                "1": "Keine extra Sicherheitsmaßnahmen vorhanden"
+            }
+        },
+        {
+            "field_name": "smarthomesecurity",
+            "field_title": "Smarthome Sicherheitstechnik vorhanden? (Anschluss an Sicherheitszentrale)",
+            "field_type": "integer",
+            "options": {
+                "1": "Smarthome Sicherheitstechnik vorhanden",
+                "2": "Keine Smarthome Sicherheitstechnik"
+            }
+        },
+        {
+            "field_name": "glas",
+            "field_type": "integer",
+            "options": {
+                "0": "Glasbruch soll mitversichert werden",
+                "1": "Auf Glasbruch kann auch verzichtet werden"
+            }
+        },
+        {
+            "field_name": "zweitein",
+            "field_type": "integer",
+            "options": {
+                "0": "Kein Zweitwohnsitz oder Einpersonenhaushalt",
+                "1": "Zweitwohnsitz oder Einpersonenhaushalt"
+            }
+        },
+        {
+            "field_name": "regionalrabatt",
+            "field_type": "string",
+            "options": {
+                "wien": "Wien",
+                "niederoesterreich": "Niederoesterreich",
+                "steiermark": "Steiermark",
+                "burgenland": "Burgenland",
+                "oberoesterreich": "Oberösterreich",
+                "kaernten": "Kärnten",
+                "salzburg": "Salzburg",
+                "tirol": "Tirol",
+                "vorarlberg": "Vorarlberg"
+            }
+        }
+    ]
+    '''
+
+    return options
