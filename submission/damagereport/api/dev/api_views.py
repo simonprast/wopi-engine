@@ -120,8 +120,6 @@ class OpenCloseDamageReport(generics.GenericAPIView):
             raise exceptions.PermissionDenied
 
         if report.status != 'c':
-            report.status = 'c'
-
             message = Message(
                 report=report,
                 message_body='DAMAGEREPORTCLOSEDNOWMESSAGE',
@@ -129,10 +127,8 @@ class OpenCloseDamageReport(generics.GenericAPIView):
             )
 
             message.save()
-
-        if report.status == 'c':
-            report.status = 'w'
-
+            report.status = 'c'
+        else:
             message = Message(
                 report=report,
                 message_body='DAMAGEREPORTOPENEDNOWMESSAGE',
@@ -140,6 +136,7 @@ class OpenCloseDamageReport(generics.GenericAPIView):
             )
 
             message.save()
+            report.status = 'w'
 
         report.save()
 
