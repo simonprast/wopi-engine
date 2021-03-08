@@ -270,7 +270,7 @@ class AddSubmissionDocument(generics.GenericAPIView):
         # Get the requested submission
         submission = self.get_submission(pk=pk)
 
-        if submission.submitter != request.user or not request.user.is_staff():
+        if submission.submitter != request.user or not request.user.is_staff:
             return Response({'error': 'You are not allowed to perform this action.'})
 
         if submission.active:
