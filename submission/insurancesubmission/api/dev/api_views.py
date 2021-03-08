@@ -7,7 +7,7 @@
 
 import json
 
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 
 from rest_framework import exceptions, generics, permissions, status
 from rest_framework.response import Response
@@ -213,23 +213,29 @@ class AddTemplateDocument(generics.GenericAPIView):
         if submission.active:
             return Response({'error': 'You cannot change agreement files on active contracts.'})
 
-        print(request.data.__contains__('template_1'))
-        print(type(request.data.get('template_1')))
-
-        if request.data.__contains__('template_1') and type(request.data.get('template_1')) is InMemoryUploadedFile:
-            print('received document')
+        if (request.data.__contains__('template_1')
+                and (type(request.data.get('template_1')) is InMemoryUploadedFile
+                     or type(request.data.get('template_1')) is TemporaryUploadedFile)):
             submission.document_template_1 = request.data.get('template_1')
 
-        if request.data.__contains__('template_2') and type(request.data.get('template_2')) is InMemoryUploadedFile:
+        if (request.data.__contains__('template_2')
+                and (type(request.data.get('template_2')) is InMemoryUploadedFile
+                     or type(request.data.get('template_2')) is TemporaryUploadedFile)):
             submission.document_template_2 = request.data.get('template_2')
 
-        if request.data.__contains__('template_3') and type(request.data.get('template_3')) is InMemoryUploadedFile:
+        if (request.data.__contains__('template_3')
+                and (type(request.data.get('template_3')) is InMemoryUploadedFile
+                     or type(request.data.get('template_3')) is TemporaryUploadedFile)):
             submission.document_template_3 = request.data.get('template_3')
 
-        if request.data.__contains__('template_4') and type(request.data.get('template_4')) is InMemoryUploadedFile:
+        if (request.data.__contains__('template_4')
+                and (type(request.data.get('template_4')) is InMemoryUploadedFile
+                     or type(request.data.get('template_4')) is TemporaryUploadedFile)):
             submission.document_template_4 = request.data.get('template_4')
 
-        if request.data.__contains__('template_5') and type(request.data.get('template_5')) is InMemoryUploadedFile:
+        if (request.data.__contains__('template_5')
+                and (type(request.data.get('template_5')) is InMemoryUploadedFile
+                     or type(request.data.get('template_5')) is TemporaryUploadedFile)):
             submission.document_template_5 = request.data.get('template_5')
 
         submission.status = 'o'
@@ -270,20 +276,30 @@ class AddSubmissionDocument(generics.GenericAPIView):
         if submission.active:
             return Response({'error': 'You cannot change agreement files on active contracts.'})
 
-        if request.data.__contains__('document_1') and type(request.data.get('document_1')) is InMemoryUploadedFile:
+        if (request.data.__contains__('document_1')
+                and (type(request.data.get('document_1')) is InMemoryUploadedFile
+                     or type(request.data.get('document_1')) is TemporaryUploadedFile)):
             submission.document_submission_1 = request.data.get('document_1')
             print(type(request.data.get('document_1')))
 
-        if request.data.__contains__('document_2') and type(request.data.get('document_2')) is InMemoryUploadedFile:
+        if (request.data.__contains__('document_2')
+                and (type(request.data.get('document_2')) is InMemoryUploadedFile
+                     or type(request.data.get('document_2')) is TemporaryUploadedFile)):
             submission.document_submission_2 = request.data.get('document_2')
 
-        if request.data.__contains__('document_3') and type(request.data.get('document_3')) is InMemoryUploadedFile:
+        if (request.data.__contains__('document_3')
+                and (type(request.data.get('document_3')) is InMemoryUploadedFile
+                     or type(request.data.get('document_3')) is TemporaryUploadedFile)):
             submission.document_submission_3 = request.data.get('document_3')
 
-        if request.data.__contains__('document_4') and type(request.data.get('document_4')) is InMemoryUploadedFile:
+        if (request.data.__contains__('document_4')
+                and (type(request.data.get('document_4')) is InMemoryUploadedFile
+                     or type(request.data.get('document_4')) is TemporaryUploadedFile)):
             submission.document_submission_4 = request.data.get('document_4')
 
-        if request.data.__contains__('document_5') and type(request.data.get('document_5')) is InMemoryUploadedFile:
+        if (request.data.__contains__('document_5')
+                and (type(request.data.get('document_5')) is InMemoryUploadedFile
+                     or type(request.data.get('document_5')) is TemporaryUploadedFile)):
             submission.document_submission_5 = request.data.get('document_5')
 
         submission.status = 'w'
