@@ -181,8 +181,11 @@ class ChangeInsuranceSubmissionDetails(generics.GenericAPIView):
 
             submission.policy_id = request.data.get('policy_id')
 
-        if request.data.__contains__('document'):
+        if (request.data.__contains__('document')
+                and (type(request.data.get('document')) is InMemoryUploadedFile
+                     or type(request.data.get('document')) is TemporaryUploadedFile)):
             submission.policy_document = request.data.get('document')
+            submission.active = True
 
         submission.save()
 
