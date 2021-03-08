@@ -98,9 +98,13 @@ class MessageAdmin(admin.ModelAdmin):
     filter_horizontal = ()
 
     def get_reportid(self, obj):
-        return str(obj.report.id) + \
-            " (" + str(obj.report.policy.insurance) + \
-            ", " + str(obj.report.policy.policy_id) + ")"
+        try:
+            report_id_str = str(obj.report.id) + \
+                " (" + str(obj.report.policy.insurance) + \
+                ", " + str(obj.report.policy.policy_id) + ")"
+        except AttributeError:
+            report_id_str = "Damage Report Deleted"
+        return report_id_str
     get_reportid.short_description = 'Damage Report'
 
 
