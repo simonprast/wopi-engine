@@ -8,7 +8,7 @@
 from django import forms
 from django.contrib import admin
 
-from .models import DamageReport, Message
+from .models import DamageReport, Image, Message
 
 
 class DamageReportCreationForm(forms.ModelForm):
@@ -109,3 +109,48 @@ class MessageAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Message, MessageAdmin)
+
+
+class ImageCreationForm(forms.ModelForm):
+    # A form for creating new id submission.
+    class Meta:
+        model = Message
+        exclude = ()
+
+
+class ImageChangeForm(forms.ModelForm):
+    # A form for updating id submission.
+    class Meta:
+        model = Message
+        exclude = ()
+
+
+class ImageAdmin(admin.ModelAdmin):
+    # The forms to add and change submission
+    form = ImageChangeForm
+    add_form = ImageCreationForm
+
+    list_display = ("id",)
+    list_filter = ("id",)
+    fieldsets = (
+        (None, {"fields": ("image", "message")}),
+        # ("Data", {"fields": ("submission_data",)}),
+    )
+
+    add_fieldsets = fieldsets
+    search_fields = ()
+    ordering = ("id",)
+    filter_horizontal = ()
+
+    def get_reportid(self, obj):
+        try:
+            report_id_str = str(obj.report.id) + \
+                " (" + str(obj.report.policy.insurance) + \
+                ", " + str(obj.report.policy.policy_id) + ")"
+        except AttributeError:
+            report_id_str = "Damage Report Deleted"
+        return report_id_str
+    get_reportid.short_description = 'Damage Report'
+
+
+admin.site.register(Image, ImageAdmin)
