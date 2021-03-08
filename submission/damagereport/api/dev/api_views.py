@@ -141,6 +141,8 @@ class OpenCloseDamageReport(generics.GenericAPIView):
 
             message.save()
 
+        report.save()
+
         return Response({'status': report.status}, status=status.HTTP_200_OK)
 
 
