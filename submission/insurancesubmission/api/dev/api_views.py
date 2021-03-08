@@ -213,7 +213,11 @@ class AddTemplateDocument(generics.GenericAPIView):
         if submission.active:
             return Response({'error': 'You cannot change agreement files on active contracts.'})
 
+        print(request.data.__contains__('template_1'))
+        print(type(request.data.get('template_1')))
+
         if request.data.__contains__('template_1') and type(request.data.get('template_1')) is InMemoryUploadedFile:
+            print('received document')
             submission.document_template_1 = request.data.get('template_1')
 
         if request.data.__contains__('template_2') and type(request.data.get('template_2')) is InMemoryUploadedFile:
