@@ -163,7 +163,7 @@ class IDTokenView(APIView):
 
     def get(self, request, *args, **kwargs):
         time_left = 60
-        if IDToken.objects.get(user=request.user):
+        if IDToken.objects.filter(user=request.user).exists():
             token = IDToken.objects.get(user=request.user)
         else:
             token = IDToken.objects.create(user=request.user)
@@ -176,3 +176,20 @@ class IDTokenView(APIView):
             token = IDToken.objects.create(user=request.user)
 
         return Response({'token': str(token.token), 'time_left': time_left})
+
+    def post(self, request, *args, **kwargs):
+        if IDToken.objects.filter(token=request.data['token']).exists():
+            token = IDToken.objects.get(token=request.data['token'])
+            if (datetime.now(timezone.utc) - token.created_at).total_seconds() < 60:
+                token.called = True
+                token.save()
+                return Response(
+                    {'success': 'The Token has been called.'},
+                    status=status.HTTP_200_OK
+                )
+            else:
+                token.delete()
+        return Response(
+                {'TokenNotFound': 'Given token was not found.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
