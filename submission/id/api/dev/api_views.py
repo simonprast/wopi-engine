@@ -177,6 +177,10 @@ class IDTokenView(APIView):
 
         return Response({'token': str(token.token), 'time_left': time_left})
 
+
+class CallToken(APIView):
+    permission_classes = [permissions.AllowAny]
+
     def post(self, request, *args, **kwargs):
         if IDToken.objects.filter(token=request.data['token']).exists():
             token = IDToken.objects.get(token=request.data['token'])

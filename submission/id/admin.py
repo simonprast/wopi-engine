@@ -8,7 +8,7 @@
 from django import forms
 from django.contrib import admin
 
-from .models import IDSubmission
+from .models import IDSubmission, IDToken
 
 
 class IDSubmissionCreationForm(forms.ModelForm):
@@ -55,3 +55,4 @@ class IDSubmissionAdmin(admin.ModelAdmin):
 
 
 admin.site.register(IDSubmission, IDSubmissionAdmin)
+admin.site.register(IDToken)

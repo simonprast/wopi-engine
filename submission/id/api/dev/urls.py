@@ -24,6 +24,9 @@ urlpatterns = [
 
     # GET - token of user
     path('user/idtoken/', api_views.IDTokenView.as_view()),
+
+    # POST - token is called
+    path('user/idtoken/call/', api_views.CallToken.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
