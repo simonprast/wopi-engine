@@ -65,3 +65,18 @@ class IDSubmission(models.Model):
         return 'Ausweis von ' + str(self.submitter) + \
             ' (verified: ' + str(self.verified) + \
             ', latest: ' + str(self.latest) + ')'
+
+
+class IDToken(models.Model):
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE
+    )
+    token = models.UUIDField(
+        default=uuid.uuid4
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return str(self.token)
