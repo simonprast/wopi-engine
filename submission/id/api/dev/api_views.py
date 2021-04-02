@@ -157,6 +157,9 @@ class UserDocument(generics.GenericAPIView):
         serializer = IDSubmissionSerializer(submissions, many=True)
         return Response(serializer.data)
 
+    def post(self, request, *args, **kwargs):
+        pass
+
 
 class IDTokenView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -193,7 +196,31 @@ class CallToken(APIView):
                 )
             else:
                 token.delete()
+
         return Response(
                 {'TokenNotFound': 'Given token was not found.'},
                 status=status.HTTP_403_FORBIDDEN
+            )
+
+
+class ProgressReportView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        if IDToken.objects.filter(user=request.user).exists():
+            token = IDToken.objects.get(user=request.user)
+            if token.called is True and token.uploaded is True:
+                token.delete()
+                return Response({
+                    'called': True,
+                    'uploaded': True
+                })
+            return Response({
+                'called': token.called,
+                'uploaded': token.uploaded,
+            })
+
+        return Response(
+                {'TokenNotFound': 'Given token was not found.'},
+                status=status.HTTP_400_BAD_REQUEST
             )

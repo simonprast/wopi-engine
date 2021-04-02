@@ -80,6 +80,6 @@ class IDToken(models.Model):
     called = models.BooleanField(
         default=False
     )
-
-    def __str__(self):
-        return str(self.token)
+    uploaded = models.BooleanField(
+        default=False
+    )

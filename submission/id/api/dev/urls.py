@@ -27,6 +27,9 @@ urlpatterns = [
 
     # POST - token is called
     path('user/idtoken/call/', api_views.CallToken.as_view()),
+
+    # GET - get status of called and uploaded of a token.
+    path('user/idtoken/progress/', api_views.ProgressReportView.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
