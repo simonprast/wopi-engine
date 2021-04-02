@@ -21,6 +21,9 @@ urlpatterns = [
 
     # GET - all IDs of a single user (admin)
     path('user/<uuid:pk>/', api_views.UserDocument.as_view()),
+
+    # GET - token of user
+    path('user/idtoken/', api_views.IDTokenView.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

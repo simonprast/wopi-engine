@@ -4,13 +4,15 @@
 # Copyright (c) 2020 - Simon Prast
 #
 
+from datetime import datetime, timezone
 
 from mail_templated import EmailMessage
 
 from rest_framework import exceptions, generics, permissions, status
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from submission.id.models import IDSubmission
+from submission.id.models import IDSubmission, IDToken
 
 from user.models import User
 
@@ -154,3 +156,23 @@ class UserDocument(generics.GenericAPIView):
         submissions = IDSubmission.objects.filter(submitter=user)
         serializer = IDSubmissionSerializer(submissions, many=True)
         return Response(serializer.data)
+
+
+class IDTokenView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        time_left = 60
+        if IDToken.objects.get(user=request.user):
+            token = IDToken.objects.get(user=request.user)
+        else:
+            token = IDToken.objects.create(user=request.user)
+
+        time_since = (datetime.now(timezone.utc) - token.created_at).total_seconds()
+        if time_since < 60:
+            time_left = 60-time_since
+        else:
+            token.delete()
+            token = IDToken.objects.create(user=request.user)
+
+        return Response({'token': str(token.token), 'time_left': time_left})
