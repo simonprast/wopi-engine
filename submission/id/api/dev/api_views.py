@@ -52,6 +52,7 @@ class HandleDocument(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = IDSubmissionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        id_document = ""
 
         if request.user.is_anonymous:
             if IDToken.objects.filter(token=request.data['token']).exists():
@@ -65,7 +66,13 @@ class HandleDocument(generics.GenericAPIView):
             token.save()
             id_document = serializer.save(user=request.user)
 
-        return Response({'submission_id': str(id_document)})
+        if id_document != "":
+            return Response({'submission_id': str(id_document)})
+
+        return Response(
+                {'TokenNotFound': 'User does not have a token.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class VerifyDocument(generics.GenericAPIView):
