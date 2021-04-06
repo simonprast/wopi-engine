@@ -19,12 +19,13 @@ from user.models import User
 from user.api.dev.serializers import ChangeUserSerializer
 
 from .serializers import IDSubmissionSerializer
+from .permissions import HasTokenOrIsAuthenticated
 
 
 class HandleDocument(generics.GenericAPIView):
     queryset = IDSubmission.objects.all()
     serializer_class = IDSubmissionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [HasTokenOrIsAuthenticated]
 
     def get_object(self, user, latest=True):
         try:
@@ -51,7 +52,19 @@ class HandleDocument(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = IDSubmissionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        id_document = serializer.save(user=request.user)
+
+        if request.user.is_anonymous:
+            if IDToken.objects.filter(token=request.data['token']).exists():
+                token = IDToken.objects.get(token=request.data['token'])
+                token.uploaded = True
+                token.save()
+                id_document = serializer.save(user=token.user)
+        elif IDToken.objects.filter(user=request.user).exists():
+            token = IDToken.objects.get(user=request.user)
+            token.uploaded = True
+            token.save()
+            id_document = serializer.save(user=request.user)
+
         return Response({'submission_id': str(id_document)})
 
 
@@ -209,16 +222,13 @@ class ProgressReportView(APIView):
     def get(self, request, *args, **kwargs):
         if IDToken.objects.filter(user=request.user).exists():
             token = IDToken.objects.get(user=request.user)
+            data = {
+                'called': token.called,
+                'uploaded': token.uploaded
+            }
             if token.called is True and token.uploaded is True:
                 token.delete()
-                return Response({
-                    'called': True,
-                    'uploaded': True
-                })
-            return Response({
-                'called': token.called,
-                'uploaded': token.uploaded,
-            })
+            return Response(data)
 
         return Response(
                 {'TokenNotFound': 'Given token was not found.'},
