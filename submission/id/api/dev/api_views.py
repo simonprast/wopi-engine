@@ -38,6 +38,9 @@ class HandleDocument(generics.GenericAPIView):
     # GET - shown own, latest ID document and verified status (customer)
     # GET - show all latest, unverified ID documents (admin)
     def get(self, request, *args, **kwargs):
+        if request.user.is_anonymous:
+            return exceptions.NotAuthenticated
+
         if request.user.is_staff:
             submissions = IDSubmission.objects.filter(
                 verified=False, latest=True, denied=False)
@@ -52,27 +55,21 @@ class HandleDocument(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = IDSubmissionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        id_document = ""
 
         if request.user.is_anonymous:
-            if IDToken.objects.filter(token=request.data['token']).exists():
-                token = IDToken.objects.get(token=request.data['token'])
+            if IDToken.objects.filter(token=request.data.get('token')).exists():
+                token = IDToken.objects.get(token=request.data.get('token'))
                 token.uploaded = True
                 token.save()
                 id_document = serializer.save(user=token.user)
-        elif IDToken.objects.filter(user=request.user).exists():
-            token = IDToken.objects.get(user=request.user)
-            token.uploaded = True
-            token.save()
+        else:
+            if IDToken.objects.filter(user=request.user).exists():
+                token = IDToken.objects.get(user=request.user)
+                token.uploaded = True
+                token.save()
             id_document = serializer.save(user=request.user)
 
-        if id_document != "":
-            return Response({'submission_id': str(id_document)})
-
-        return Response(
-                {'TokenNotFound': 'User does not have a token.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        return Response({'submission_id': str(id_document)})
 
 
 class VerifyDocument(generics.GenericAPIView):
@@ -185,11 +182,12 @@ class IDTokenView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
-        time_left = 60
         if IDToken.objects.filter(user=request.user).exists():
             token = IDToken.objects.get(user=request.user)
         else:
             token = IDToken.objects.create(user=request.user)
+
+        time_left = 60
 
         time_since = (datetime.now(timezone.utc) - token.created_at).total_seconds()
         if time_since < 60:
@@ -205,13 +203,13 @@ class CallToken(APIView):
     permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
-        if IDToken.objects.filter(token=request.data['token']).exists():
-            token = IDToken.objects.get(token=request.data['token'])
-            if (datetime.now(timezone.utc) - token.created_at).total_seconds() < 60:
+        if IDToken.objects.filter(token=request.data.get('token')).exists():
+            token = IDToken.objects.get(token=request.data.get('token'))
+            if (datetime.now(timezone.utc) - token.created_at).total_seconds() < 70:
                 token.called = True
                 token.save()
                 return Response(
-                    {'success': 'The Token has been called.'},
+                    {'success': 'The token has been called.'},
                     status=status.HTTP_200_OK
                 )
             else:
@@ -219,7 +217,7 @@ class CallToken(APIView):
 
         return Response(
                 {'TokenNotFound': 'Given token was not found.'},
-                status=status.HTTP_403_FORBIDDEN
+                status=status.HTTP_400_BAD_REQUEST
             )
 
 
@@ -238,6 +236,6 @@ class ProgressReportView(APIView):
             return Response(data)
 
         return Response(
-                {'TokenNotFound': 'Given token was not found.'},
+                {'TokenNotFound': 'No active token associated with authenticated user.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
