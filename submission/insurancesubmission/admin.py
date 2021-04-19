@@ -8,7 +8,7 @@
 from django import forms
 from django.contrib import admin
 
-from .models import InsuranceSubmission
+from .models import InsuranceSubmission, Document
 
 
 class InsuranceSubmissionCreationForm(forms.ModelForm):
@@ -64,3 +64,4 @@ class InsuranceSubmissionAdmin(admin.ModelAdmin):
 
 
 admin.site.register(InsuranceSubmission, InsuranceSubmissionAdmin)
+admin.site.register(Document)

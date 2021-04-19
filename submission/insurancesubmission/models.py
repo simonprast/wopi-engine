@@ -63,38 +63,6 @@ class InsuranceSubmission(models.Model):
     # This is the status field, which can either be w(aiting), o(pen), or c(losed).
     status = models.CharField(max_length=1, default='w')
 
-    document_template_1 = models.FileField(
-        upload_to=create_path, null=True, blank=True
-    )
-    document_template_2 = models.FileField(
-        upload_to=create_path, null=True, blank=True
-    )
-    document_template_3 = models.FileField(
-        upload_to=create_path, null=True, blank=True
-    )
-    document_template_4 = models.FileField(
-        upload_to=create_path, null=True, blank=True
-    )
-    document_template_5 = models.FileField(
-        upload_to=create_path, null=True, blank=True
-    )
-
-    document_submission_1 = models.FileField(
-        upload_to=create_path, null=True, blank=True
-    )
-    document_submission_2 = models.FileField(
-        upload_to=create_path, null=True, blank=True
-    )
-    document_submission_3 = models.FileField(
-        upload_to=create_path, null=True, blank=True
-    )
-    document_submission_4 = models.FileField(
-        upload_to=create_path, null=True, blank=True
-    )
-    document_submission_5 = models.FileField(
-        upload_to=create_path, null=True, blank=True
-    )
-
     submitter = models.ForeignKey(
         User, on_delete=models.SET_NULL, blank=True, null=True
     )
@@ -122,3 +90,18 @@ class InsuranceSubmission(models.Model):
             return 'Anfrage zu ' + str(self.insurance) + ' von ' + str(self.submitter)
         else:
             return 'Anfrage von ' + str(self.submitter)
+
+
+class Document(models.Model):
+    title = models.CharField(max_length=50, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
+    insurance_submission = models.ForeignKey(
+        InsuranceSubmission, on_delete=models.CASCADE, null=True, blank=True
+    )
+    template = models.FileField(
+        upload_to=create_path, null=True, blank=True
+    )
+    document = models.FileField(
+        upload_to=create_path, null=True, blank=True
+    )
+    signature = models.ImageField(default=None, blank=True)
