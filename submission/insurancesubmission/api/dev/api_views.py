@@ -118,6 +118,8 @@ class GetInsuranceSubmissions(generics.GenericAPIView):
     def create_submission_list(self, submissions):
         submission_list = []
         for submission in submissions:
+            documents = Document.objects.filter(insurance_submission=submission)
+            serializer = DocumentSerializer(documents, many=True)
             submission_obj = {
                 'id': submission.id,
                 'insurance': str(submission.insurance),
@@ -130,16 +132,7 @@ class GetInsuranceSubmissions(generics.GenericAPIView):
                     'status': submission.status
                 },
                 'document': None if not submission.policy_document else submission.policy_document.url,
-                'template_1': None if not submission.document_template_1 else submission.document_template_1.url,
-                'template_2': None if not submission.document_template_2 else submission.document_template_2.url,
-                'template_3': None if not submission.document_template_3 else submission.document_template_3.url,
-                'template_4': None if not submission.document_template_4 else submission.document_template_4.url,
-                'template_5': None if not submission.document_template_5 else submission.document_template_5.url,
-                'agreement_1': None if not submission.document_submission_1 else submission.document_submission_1.url,
-                'agreement_2': None if not submission.document_submission_2 else submission.document_submission_2.url,
-                'agreement_3': None if not submission.document_submission_3 else submission.document_submission_3.url,
-                'agreement_4': None if not submission.document_submission_4 else submission.document_submission_4.url,
-                'agreement_5': None if not submission.document_submission_5 else submission.document_submission_5.url,
+                'submission_documents': None if documents.__len__ == 0 else serializer.data,
                 'data': json.loads((submission.data).replace("\'", "\"")),
                 'options': json.loads(translate_options())
             }
