@@ -219,43 +219,30 @@ class AddTemplateDocument(generics.GenericAPIView):
         if submission.active:
             return Response({'error': 'You cannot change agreement files on active contracts.'})
 
-        if (request.data.__contains__('template_1')
-                and (type(request.data.get('template_1')) is InMemoryUploadedFile
-                     or type(request.data.get('template_1')) is TemporaryUploadedFile)):
-            submission.document_template_1 = request.data.get('template_1')
+        if request.data.__contains__('id'):
+            document = Document.objects.get(pk=request.data.get('id'))
+        else:
+            document = Document.create(
+                insurance_submission=submission,
+                title=request.data.get('title'),
+                description=request.data.get('description')
+                )
 
-        if (request.data.__contains__('template_2')
-                and (type(request.data.get('template_2')) is InMemoryUploadedFile
-                     or type(request.data.get('template_2')) is TemporaryUploadedFile)):
-            submission.document_template_2 = request.data.get('template_2')
-
-        if (request.data.__contains__('template_3')
-                and (type(request.data.get('template_3')) is InMemoryUploadedFile
-                     or type(request.data.get('template_3')) is TemporaryUploadedFile)):
-            submission.document_template_3 = request.data.get('template_3')
-
-        if (request.data.__contains__('template_4')
-                and (type(request.data.get('template_4')) is InMemoryUploadedFile
-                     or type(request.data.get('template_4')) is TemporaryUploadedFile)):
-            submission.document_template_4 = request.data.get('template_4')
-
-        if (request.data.__contains__('template_5')
-                and (type(request.data.get('template_5')) is InMemoryUploadedFile
-                     or type(request.data.get('template_5')) is TemporaryUploadedFile)):
-            submission.document_template_5 = request.data.get('template_5')
+        if (request.data.__contains__('template')
+                and (type(request.data.get('template')) is InMemoryUploadedFile
+                     or type(request.data.get('template')) is TemporaryUploadedFile)):
+            document.template = request.data.get('template')
+            document.save()
 
         submission.status = 'o'
-
         submission.save()
 
+        documents = Document.objects.filter(insurance_submission=submission)
+        serializer = DocumentSerializer(documents, many=True)
         return Response(
             {
                 'policy_id': submission.policy_id,
-                'template_1': None if not submission.document_template_1 else submission.document_template_1.url,
-                'template_2': None if not submission.document_template_2 else submission.document_template_2.url,
-                'template_3': None if not submission.document_template_3 else submission.document_template_3.url,
-                'template_4': None if not submission.document_template_4 else submission.document_template_4.url,
-                'template_5': None if not submission.document_template_5 else submission.document_template_5.url,
+                'documents': None if documents.__len__ == 0 else serializer.data,
                 'active': submission.active,
                 'denied': submission.denied,
             }, status=status.HTTP_200_OK
