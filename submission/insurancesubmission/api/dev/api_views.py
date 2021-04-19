@@ -12,12 +12,12 @@ from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUpload
 from rest_framework import exceptions, generics, permissions, status
 from rest_framework.response import Response
 
-from submission.insurancesubmission.models import InsuranceSubmission
+from submission.insurancesubmission.models import InsuranceSubmission, Document
 
 from user.api.dev.serializers import LoginUserSerializer, UserDetailSerializer
 from user.create_or_login import create_or_login
 
-from .serializers import InsuranceSubmissionSerializer
+from .serializers import InsuranceSubmissionSerializer, DocumentSerializer
 
 
 class SubmitInsurance(generics.GenericAPIView):
@@ -53,35 +53,44 @@ class SubmitInsurance(generics.GenericAPIView):
             # Save the submission through the serializer
             submission = submit_serializer.save(user=user)
 
-            # If the serializer.save() method returns the string 'DuplicateError', it means that a
-            # submission with the exact same submission data already exists for this insurance.
-            # In this case, the submission is not saved.
-            if submission == 'DuplicateError':
-                return Response({'DuplicateError': 'An identical submission already exists.'},
-                                status=status.HTTP_403_FORBIDDEN)
-
-            # The endpoint returns the create_or_login return_dict containing authentication
-            # info and appends the return string of the created submission on success.
-            return_dict.update({'success': str(submission)})
-            return Response(return_dict, status=status.HTTP_201_CREATED)
         else:
             serializer = InsuranceSubmissionSerializer(data=request.data)
 
             if not serializer.is_valid():
                 # Return the serializer errors in case the request validation fails
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-            else:
-                # Save the submission through the serializer
-                submission = serializer.save(user=request.user)
 
-                # If the serializer.save() method returns the string 'DuplicateError', it means that a
-                # submission with the exact same submission data already exists for this insurance.
-                # In this case, the submission is not saved.
-                if submission == 'DuplicateError':
-                    return Response({'DuplicateError': 'An identical submission already exists.'},
-                                    status=status.HTTP_403_FORBIDDEN)
+            # Save the submission through the serializer
+            submission = serializer.save(user=request.user)
 
-                return Response({'success': str(submission)}, status=status.HTTP_201_CREATED)
+        # If the serializer.save() method returns the string 'DuplicateError', it means that a
+        # submission with the exact same submission data already exists for this insurance.
+        # In this case, the submission is not saved.
+        if submission == 'DuplicateError':
+            return Response({'DuplicateError': 'An identical submission already exists.'},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        titles = request.data.getlist('document_titles')
+        descriptions = request.data.getlist('document_descriptions')
+        templates = request.data.getlist('document_templates')
+        documents = request.data.getlist('document_documents')
+        if len(titles) == len(descriptions):
+            for i in range(0, len(titles)):
+                template, doc = None, None
+                if len(templates) > i:
+                    template=templates[i]
+                if len(documents) > i:
+                    doc=documents[i]
+                document = Document.objects.create(
+                    title=titles[i],
+                    description=descriptions[i],
+                    insurance_submission=submission,
+                    template=template,
+                    document=doc
+                    )
+                document.save()
+
+        return Response({'success': str(submission)}, status=status.HTTP_201_CREATED)
 
 
 class GetInsuranceSubmissions(generics.GenericAPIView):
