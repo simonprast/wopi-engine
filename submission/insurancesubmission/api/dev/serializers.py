@@ -12,7 +12,7 @@ from rest_framework import serializers
 from insurance.models import Insurance
 
 from submission.insurancesubmission.field_validation import field_validation
-from submission.insurancesubmission.models import InsuranceSubmission
+from submission.insurancesubmission.models import InsuranceSubmission, Document
 
 
 def create_data(initial_data):
@@ -74,3 +74,9 @@ class InsuranceSubmissionSerializer(serializers.Serializer):
         )
 
         return in_submission
+
+
+class DocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Document
+        exclude = ['insurance_submission']
