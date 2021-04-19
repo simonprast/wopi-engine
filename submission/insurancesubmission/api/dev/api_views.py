@@ -269,44 +269,25 @@ class AddSubmissionDocument(generics.GenericAPIView):
         if submission.active:
             return Response({'error': 'You cannot change agreement files on active contracts.'})
 
-        if (request.data.__contains__('document_1')
-                and (type(request.data.get('document_1')) is InMemoryUploadedFile
-                     or type(request.data.get('document_1')) is TemporaryUploadedFile)):
-            submission.document_submission_1 = request.data.get('document_1')
-            print(type(request.data.get('document_1')))
-
-        if (request.data.__contains__('document_2')
-                and (type(request.data.get('document_2')) is InMemoryUploadedFile
-                     or type(request.data.get('document_2')) is TemporaryUploadedFile)):
-            submission.document_submission_2 = request.data.get('document_2')
-
-        if (request.data.__contains__('document_3')
-                and (type(request.data.get('document_3')) is InMemoryUploadedFile
-                     or type(request.data.get('document_3')) is TemporaryUploadedFile)):
-            submission.document_submission_3 = request.data.get('document_3')
-
-        if (request.data.__contains__('document_4')
-                and (type(request.data.get('document_4')) is InMemoryUploadedFile
-                     or type(request.data.get('document_4')) is TemporaryUploadedFile)):
-            submission.document_submission_4 = request.data.get('document_4')
-
-        if (request.data.__contains__('document_5')
-                and (type(request.data.get('document_5')) is InMemoryUploadedFile
-                     or type(request.data.get('document_5')) is TemporaryUploadedFile)):
-            submission.document_submission_5 = request.data.get('document_5')
+        if request.data.__contains__('id'):
+            document = Document.objects.get(pk=request.data.get('id'))
+            if (request.data.__contains__('document')
+                and (type(request.data.get('document')) is InMemoryUploadedFile
+                        or type(request.data.get('document')) is TemporaryUploadedFile)):
+                document.document = request.data.get('document')
+                document.save()
+        else:
+            return Response('Request must contain document id.', status=status.HTTP_400_BAD_REQUEST)
 
         submission.status = 'w'
-
         submission.save()
 
+        documents = Document.objects.filter(insurance_submission=submission)
+        serializer = DocumentSerializer(documents, many=True)
         return Response(
             {
                 'policy_id': submission.policy_id,
-                'document_1': None if not submission.document_submission_1 else submission.document_submission_1.url,
-                'document_2': None if not submission.document_submission_2 else submission.document_submission_2.url,
-                'document_3': None if not submission.document_submission_3 else submission.document_submission_3.url,
-                'document_4': None if not submission.document_submission_4 else submission.document_submission_4.url,
-                'document_5': None if not submission.document_submission_5 else submission.document_submission_5.url,
+                'documents': None if documents.__len__ == 0 else serializer.data,
                 'active': submission.active,
                 'denied': submission.denied,
             }, status=status.HTTP_200_OK
