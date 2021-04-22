@@ -53,44 +53,35 @@ class SubmitInsurance(generics.GenericAPIView):
             # Save the submission through the serializer
             submission = submit_serializer.save(user=user)
 
+            # If the serializer.save() method returns the string 'DuplicateError', it means that a
+            # submission with the exact same submission data already exists for this insurance.
+            # In this case, the submission is not saved.
+            if submission == 'DuplicateError':
+                return Response({'DuplicateError': 'An identical submission already exists.'},
+                                status=status.HTTP_403_FORBIDDEN)
+
+            # The endpoint returns the create_or_login return_dict containing authentication
+            # info and appends the return string of the created submission on success.
+            return_dict.update({'success': str(submission)})
+            return Response(return_dict, status=status.HTTP_201_CREATED)
         else:
             serializer = InsuranceSubmissionSerializer(data=request.data)
 
             if not serializer.is_valid():
                 # Return the serializer errors in case the request validation fails
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                # Save the submission through the serializer
+                submission = serializer.save(user=request.user)
 
-            # Save the submission through the serializer
-            submission = serializer.save(user=request.user)
+                # If the serializer.save() method returns the string 'DuplicateError', it means that a
+                # submission with the exact same submission data already exists for this insurance.
+                # In this case, the submission is not saved.
+                if submission == 'DuplicateError':
+                    return Response({'DuplicateError': 'An identical submission already exists.'},
+                                    status=status.HTTP_403_FORBIDDEN)
 
-        # If the serializer.save() method returns the string 'DuplicateError', it means that a
-        # submission with the exact same submission data already exists for this insurance.
-        # In this case, the submission is not saved.
-        if submission == 'DuplicateError':
-            return Response({'DuplicateError': 'An identical submission already exists.'},
-                            status=status.HTTP_403_FORBIDDEN)
-
-        titles = request.data.getlist('document_titles')
-        descriptions = request.data.getlist('document_descriptions')
-        templates = request.data.getlist('document_templates')
-        documents = request.data.getlist('document_documents')
-        if len(titles) == len(descriptions):
-            for i in range(0, len(titles)):
-                template, doc = None, None
-                if len(templates) > i:
-                    template=templates[i]
-                if len(documents) > i:
-                    doc=documents[i]
-                document = Document.objects.create(
-                    title=titles[i],
-                    description=descriptions[i],
-                    insurance_submission=submission,
-                    template=template,
-                    document=doc
-                    )
-                document.save()
-
-        return Response({'success': str(submission)}, status=status.HTTP_201_CREATED)
+                return Response({'success': str(submission)}, status=status.HTTP_201_CREATED)
 
 
 class GetInsuranceSubmissions(generics.GenericAPIView):
@@ -117,6 +108,7 @@ class GetInsuranceSubmissions(generics.GenericAPIView):
 
     def create_submission_list(self, submissions):
         submission_list = []
+
         for submission in submissions:
             documents = Document.objects.filter(insurance_submission=submission)
             serializer = DocumentSerializer(documents, many=True)
@@ -132,7 +124,7 @@ class GetInsuranceSubmissions(generics.GenericAPIView):
                     'status': submission.status
                 },
                 'document': None if not submission.policy_document else submission.policy_document.url,
-                'submission_documents': None if documents.__len__ == 0 else serializer.data,
+                'submission_documents': None if len(documents) == 0 else serializer.data,
                 'data': json.loads((submission.data).replace("\'", "\"")),
                 'options': json.loads(translate_options())
             }
@@ -226,7 +218,7 @@ class AddTemplateDocument(generics.GenericAPIView):
                 insurance_submission=submission,
                 title=request.data.get('title'),
                 description=request.data.get('description')
-                )
+            )
 
         if (request.data.__contains__('template')
                 and (type(request.data.get('template')) is InMemoryUploadedFile
@@ -239,6 +231,7 @@ class AddTemplateDocument(generics.GenericAPIView):
 
         documents = Document.objects.filter(insurance_submission=submission)
         serializer = DocumentSerializer(documents, many=True)
+
         return Response(
             {
                 'policy_id': submission.policy_id,
@@ -273,7 +266,7 @@ class AddSubmissionDocument(generics.GenericAPIView):
             document = Document.objects.get(pk=request.data.get('id'))
             if (request.data.__contains__('document')
                 and (type(request.data.get('document')) is InMemoryUploadedFile
-                        or type(request.data.get('document')) is TemporaryUploadedFile)):
+                     or type(request.data.get('document')) is TemporaryUploadedFile)):
                 document.document = request.data.get('document')
                 document.save()
         else:
@@ -284,6 +277,7 @@ class AddSubmissionDocument(generics.GenericAPIView):
 
         documents = Document.objects.filter(insurance_submission=submission)
         serializer = DocumentSerializer(documents, many=True)
+
         return Response(
             {
                 'policy_id': submission.policy_id,
