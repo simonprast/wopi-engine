@@ -54,5 +54,11 @@ class IDSubmissionAdmin(admin.ModelAdmin):
     filter_horizontal = ()
 
 
+class IDTokenAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "token", "expired", "called", "uploaded")
+
+    search_fields = ("user",)
+
+
 admin.site.register(IDSubmission, IDSubmissionAdmin)
-admin.site.register(IDToken)
+admin.site.register(IDToken, IDTokenAdmin)
