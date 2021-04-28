@@ -105,3 +105,24 @@ class Document(models.Model):
         upload_to=create_path, null=True, blank=True
     )
     signature = models.ImageField(default=None, blank=True)
+
+
+class DocumentToken(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE
+    )
+    token = models.UUIDField(
+        default=uuid.uuid4
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    called = models.BooleanField(
+        default=False
+    )
+    signed = models.BooleanField(
+        default=False
+    )
+    expired = models.BooleanField(
+        default=False
+    )
