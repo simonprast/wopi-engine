@@ -7,12 +7,14 @@
 
 import json
 
+from datetime import datetime, timezone
+
 from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 
 from rest_framework import exceptions, generics, permissions, status
 from rest_framework.response import Response
 
-from submission.insurancesubmission.models import InsuranceSubmission, Document
+from submission.insurancesubmission.models import InsuranceSubmission, Document, DocumentToken
 
 from user.api.dev.serializers import LoginUserSerializer, UserDetailSerializer
 from user.create_or_login import create_or_login
@@ -214,7 +216,7 @@ class AddTemplateDocument(generics.GenericAPIView):
         if request.data.__contains__('id'):
             document = Document.objects.get(pk=request.data.get('id'))
         else:
-            document = Document.create(
+            document = Document.objects.create(
                 insurance_submission=submission,
                 title=request.data.get('title'),
                 description=request.data.get('description')
@@ -234,7 +236,7 @@ class AddTemplateDocument(generics.GenericAPIView):
 
         return Response(
             {
-                'policy_id': submission.policy_id,
+                'submission_id': submission.id,
                 'documents': None if documents.__len__ == 0 else serializer.data,
                 'active': submission.active,
                 'denied': submission.denied,
@@ -242,13 +244,169 @@ class AddTemplateDocument(generics.GenericAPIView):
         )
 
 
+def refresh_token_validity(user=None, document=None, token=None):
+    if token and DocumentToken.objects.filter(token=token).exists():
+        token = DocumentToken.objects.get(token=token)
+
+        expired = False
+        time_left = None
+
+        if token.called:
+            return token, time_left, expired, token.called, token.uploaded
+
+        time_alive = (datetime.now(timezone.utc) - token.created_at).total_seconds()
+
+        # If the active token is alive for less than 60 seconds, use it.
+        if time_alive < 60:
+            time_left = 60 - time_alive
+
+        # If the active token is alive for more than 60 and less than
+        # 70 seconds, it is considered the currently expired token.
+        elif time_alive < 70:
+            time_left = 70 - time_alive
+            expired = True
+
+        # If the token is alive for more than 70 seconds, it can be deleted.
+        else:
+            token.delete()
+            token = None
+
+        return token, time_left, expired, token.called, token.uploaded
+
+    if user:
+        # Initalize variable in case no expired token will be assigned.
+        expired_token = None
+
+        if DocumentToken.objects.filter(user=user).exists():
+            tokens = DocumentToken.objects.filter(user=user)
+
+            # If there exists more than one token for a user, one of them must be expired.
+            if tokens.count() > 1:
+                expired_token = tokens.get(expired=True)
+                ex_time_alive = (datetime.now(timezone.utc) - expired_token.created_at).total_seconds()
+
+                # Delete the expired token in case it has been alive for more than 70 seconds.
+                if ex_time_alive >= 70:
+                    expired_token.delete()
+                    expired_token = None
+
+            # Get the currently active token, ...
+            token = tokens.get(expired=False)
+        else:
+            # ... or create a new one.
+            token = DocumentToken.objects.create(user=user, document=document)
+
+        e_called = expired_token.called if expired_token else False
+
+        if token.called or e_called:
+            if token.called:
+                r_token = token
+            else:
+                r_token = expired_token
+
+            time_alive = (datetime.now(timezone.utc) - r_token.created_at).total_seconds()
+
+            if time_alive < 1800:
+                time_left = 1800 - time_alive
+            else:
+                raise exceptions.PermissionDenied
+
+            return r_token, None, None, True, r_token.signed
+
+        time_alive = (datetime.now(timezone.utc) - token.created_at).total_seconds()
+
+        time_left = None
+
+        # If the active token is alive for less than 60 seconds, use it.
+        if time_alive < 60:
+            time_left = 60 - time_alive
+
+        # If the active token is alive for more than 60 and less than
+        # 70 seconds, it is considered the currently expired token.
+        elif time_alive < 70:
+            token.expired = True
+            token.save()
+            expired_token = token
+
+            # A new, active token must be created.
+            token = DocumentToken.objects.create(user=user, document=document)
+            time_left = 60
+
+        # If the active token is alive for more than 70 seconds, it isn't valid anymore.
+        # A new one must be created and used.
+        else:
+            token.delete()
+            token = None
+            token = DocumentToken.objects.create(user=user, document=document)
+            time_left = 60
+
+        return token, time_left, expired_token, False, None
+
+
+class RequestSignSubmission(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_submission(self, pk):
+        try:
+            submission = InsuranceSubmission.objects.get(pk=pk)
+            return submission
+        except InsuranceSubmission.DoesNotExist:
+            raise exceptions.NotFound
+
+    def get(self, request, pk, *args, **kwargs):
+        submission = self.get_submission(pk=pk)
+
+        documents = Document.objects.filter(insurance_submission=submission)
+
+        print(documents)
+
+        token, time_left, expired_token, called, signed = refresh_token_validity(request.user, documents[0])
+
+        if not called:
+            response = {
+                'token': str(token.token),
+                'expired_token': str(expired_token.token) if expired_token else None,
+                'time_left': time_left
+            }
+        else:
+            response = {
+                'token': str(token.token),
+                'expired_token': None,
+                'time_left': None,
+                'called': True,
+                'signed': signed
+            }
+
+        return Response(response)
+
+
+class RequestSignDocument(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_document(self, pk):
+        try:
+            documents = Document.objects.get(pk=pk)
+            return documents
+        except Document.DoesNotExist:
+            raise exceptions.NotFound
+
+    def post(self, request, pk, *args, **kwargs):
+        document = self.get_document(pk=pk)
+
+        documents = Document.objects.filter(insurance_submission=document.insurance_submission)
+
+        print(documents)
+
+        return Response({})
+
+
 class AddSubmissionDocument(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_submission(self, pk):
         try:
-            submissions = InsuranceSubmission.objects.get(pk=pk)
-            return submissions
+            submission = InsuranceSubmission.objects.get(pk=pk)
+            return submission
         except InsuranceSubmission.DoesNotExist:
             raise exceptions.NotFound
 

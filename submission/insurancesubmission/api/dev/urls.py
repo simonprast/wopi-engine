@@ -15,6 +15,13 @@ urlpatterns = [
     # POST - request new insurance policy (customer)
     path('submit/', api_views.SubmitInsurance.as_view()),
 
+    # POST - request the signature of all documents of one submission (customer)
+    path('sign/submission/<int:pk>/request/', api_views.RequestSignSubmission.as_view()),
+
+    # POST - request the signature of a specific document of one submission,
+    # following the remaining of the documents (customer).
+    path('sign/document/<int:pk>/request/', api_views.RequestSignDocument.as_view()),
+
     # POST - add blank template agreement/contract documents (admin)
     path('submit/<int:pk>/template/', api_views.AddTemplateDocument.as_view()),
 
