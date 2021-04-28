@@ -68,7 +68,7 @@ class IDSubmission(models.Model):
 
 
 class IDToken(models.Model):
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         User, on_delete=models.CASCADE
     )
     token = models.UUIDField(
@@ -81,5 +81,8 @@ class IDToken(models.Model):
         default=False
     )
     uploaded = models.BooleanField(
+        default=False
+    )
+    expired = models.BooleanField(
         default=False
     )
