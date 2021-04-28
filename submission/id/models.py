@@ -69,20 +69,20 @@ class IDSubmission(models.Model):
 
 class IDToken(models.Model):
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE
+        User, on_delete=models.CASCADE, null=True, blank=True
     )
     token = models.UUIDField(
-        default=uuid.uuid4
+        default=uuid.uuid4, null=True, blank=True
     )
     created_at = models.DateTimeField(
-        auto_now_add=True
+        auto_now_add=True, null=True, blank=True
     )
     called = models.BooleanField(
-        default=False
+        default=False, null=True, blank=True
     )
     uploaded = models.BooleanField(
-        default=False
+        default=False, null=True, blank=True
     )
     expired = models.BooleanField(
-        default=False
+        default=False, null=True, blank=True
     )

@@ -109,20 +109,23 @@ class Document(models.Model):
 
 class DocumentToken(models.Model):
     user = models.ForeignKey(
-        User, on_delete=models.CASCADE
+        User, on_delete=models.CASCADE, null=True, blank=True
+    )
+    document = models.ForeignKey(
+        InsuranceSubmission, on_delete=models.CASCADE, null=True, blank=True
     )
     token = models.UUIDField(
-        default=uuid.uuid4
+        default=uuid.uuid4, null=True, blank=True
     )
     created_at = models.DateTimeField(
-        auto_now_add=True
+        auto_now_add=True, null=True, blank=True
     )
     called = models.BooleanField(
-        default=False
+        default=False, null=True, blank=True
     )
     signed = models.BooleanField(
-        default=False
+        default=False, null=True, blank=True
     )
     expired = models.BooleanField(
-        default=False
+        default=False, null=True, blank=True
     )
