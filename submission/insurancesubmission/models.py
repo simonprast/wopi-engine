@@ -112,7 +112,7 @@ class DocumentToken(models.Model):
         User, on_delete=models.CASCADE, null=True, blank=True
     )
     document = models.ForeignKey(
-        InsuranceSubmission, on_delete=models.CASCADE, null=True, blank=True
+        Document, on_delete=models.CASCADE, null=True, blank=True
     )
     token = models.UUIDField(
         default=uuid.uuid4, null=True, blank=True
