@@ -15,12 +15,21 @@ urlpatterns = [
     # POST - request new insurance policy (customer)
     path('submit/', api_views.SubmitInsurance.as_view()),
 
-    # POST - request the signature of all documents of one submission (customer)
+    # GET - request the signature of all documents of one submission (customer)
     path('sign/submission/<int:pk>/request/', api_views.RequestSignSubmission.as_view()),
 
-    # POST - request the signature of a specific document of one submission,
-    # following the remaining of the documents (customer).
+    # GET - request the signature of a specific document of one submission,
+    # following the remaining of the documents (customer)
     path('sign/document/<int:pk>/request/', api_views.RequestSignDocument.as_view()),
+
+    # POST - Call the given token on the mobile device (customer)
+    path('sign/document/<int:pk>/call/', api_views.CallDocumentToken.as_view()),
+
+    # GET - Get a token's current progress (customer)
+    path('sign/document/<int:pk>/progress/', api_views.ProgressReportView.as_view()),
+
+    # POST - Add the signature file (customer)
+    path('sign/document/<int:pk>/signature/', api_views.SignDocument.as_view()),
 
     # POST - add blank template agreement/contract documents (admin)
     path('submit/<int:pk>/template/', api_views.AddTemplateDocument.as_view()),

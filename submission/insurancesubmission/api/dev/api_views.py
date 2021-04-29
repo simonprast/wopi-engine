@@ -14,11 +14,13 @@ from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUpload
 from rest_framework import exceptions, generics, permissions, status
 from rest_framework.response import Response
 
+from submission.insurancesubmission.insert_signature import insert_signature
 from submission.insurancesubmission.models import InsuranceSubmission, Document, DocumentToken
 
 from user.api.dev.serializers import LoginUserSerializer, UserDetailSerializer
 from user.create_or_login import create_or_login
 
+# from .permissions import HasTokenOrIsAuthenticated
 from .serializers import InsuranceSubmissionSerializer, DocumentSerializer
 
 
@@ -209,9 +211,11 @@ class AddTemplateDocument(generics.GenericAPIView):
     def post(self, request, pk, *args, **kwargs):
         # Get the requested submission
         submission = self.get_submission(pk=pk)
+        pos_x = request.data.get('pos_x')
+        pos_y = request.data.get('pos_y')
 
         if submission.active:
-            return Response({'error': 'You cannot change agreement files on active contracts.'})
+            raise exceptions.ValidationError({'error': 'You cannot change agreement files on active contracts.'})
 
         if request.data.__contains__('id'):
             document = Document.objects.get(pk=request.data.get('id'))
@@ -228,6 +232,11 @@ class AddTemplateDocument(generics.GenericAPIView):
             document.template = request.data.get('template')
             document.save()
 
+        if pos_x and pos_y:
+            document.pos_x = pos_x
+            document.pos_y = pos_y
+            document.save()
+
         submission.status = 'o'
         submission.save()
 
@@ -242,105 +251,6 @@ class AddTemplateDocument(generics.GenericAPIView):
                 'denied': submission.denied,
             }, status=status.HTTP_200_OK
         )
-
-
-def refresh_token_validity(user=None, document=None, token=None):
-    if token and DocumentToken.objects.filter(token=token).exists():
-        token = DocumentToken.objects.get(token=token)
-
-        expired = False
-        time_left = None
-
-        if token.called:
-            return token, time_left, expired, token.called, token.uploaded
-
-        time_alive = (datetime.now(timezone.utc) - token.created_at).total_seconds()
-
-        # If the active token is alive for less than 60 seconds, use it.
-        if time_alive < 60:
-            time_left = 60 - time_alive
-
-        # If the active token is alive for more than 60 and less than
-        # 70 seconds, it is considered the currently expired token.
-        elif time_alive < 70:
-            time_left = 70 - time_alive
-            expired = True
-
-        # If the token is alive for more than 70 seconds, it can be deleted.
-        else:
-            token.delete()
-            token = None
-
-        return token, time_left, expired, token.called, token.uploaded
-
-    if user:
-        # Initalize variable in case no expired token will be assigned.
-        expired_token = None
-
-        if DocumentToken.objects.filter(user=user).exists():
-            tokens = DocumentToken.objects.filter(user=user)
-
-            # If there exists more than one token for a user, one of them must be expired.
-            if tokens.count() > 1:
-                expired_token = tokens.get(expired=True)
-                ex_time_alive = (datetime.now(timezone.utc) - expired_token.created_at).total_seconds()
-
-                # Delete the expired token in case it has been alive for more than 70 seconds.
-                if ex_time_alive >= 70:
-                    expired_token.delete()
-                    expired_token = None
-
-            # Get the currently active token, ...
-            token = tokens.get(expired=False)
-        else:
-            # ... or create a new one.
-            token = DocumentToken.objects.create(user=user, document=document)
-
-        e_called = expired_token.called if expired_token else False
-
-        if token.called or e_called:
-            if token.called:
-                r_token = token
-            else:
-                r_token = expired_token
-
-            time_alive = (datetime.now(timezone.utc) - r_token.created_at).total_seconds()
-
-            if time_alive < 1800:
-                time_left = 1800 - time_alive
-            else:
-                raise exceptions.PermissionDenied
-
-            return r_token, None, None, True, r_token.signed
-
-        time_alive = (datetime.now(timezone.utc) - token.created_at).total_seconds()
-
-        time_left = None
-
-        # If the active token is alive for less than 60 seconds, use it.
-        if time_alive < 60:
-            time_left = 60 - time_alive
-
-        # If the active token is alive for more than 60 and less than
-        # 70 seconds, it is considered the currently expired token.
-        elif time_alive < 70:
-            token.expired = True
-            token.save()
-            expired_token = token
-
-            # A new, active token must be created.
-            token = DocumentToken.objects.create(user=user, document=document)
-            time_left = 60
-
-        # If the active token is alive for more than 70 seconds, it isn't valid anymore.
-        # A new one must be created and used.
-        else:
-            token.delete()
-            token = None
-            token = DocumentToken.objects.create(user=user, document=document)
-            time_left = 60
-
-        return token, time_left, expired_token, False, None
 
 
 class RequestSignSubmission(generics.GenericAPIView):
@@ -380,22 +290,233 @@ class RequestSignSubmission(generics.GenericAPIView):
         return Response(response)
 
 
+def refresh_token_validity(user=None, document=None, token=None):
+    if user and token:
+        raise exceptions.ValidationError({'error': 'You cannot provide user and token value.'})
+
+    # Check a specific token.
+    if token:
+        if DocumentToken.objects.filter(token=token).exists():
+            token = DocumentToken.objects.get(token=token)
+
+            # Get the user to whom the given token belongs to.
+            user = token.user
+
+    # Initialize variable.
+    expired_token = None
+
+    if DocumentToken.objects.filter(user=user).exists():
+        tokens = DocumentToken.objects.filter(user=user)
+
+        # If there exists more than one token for a user, one of them must be expired.
+        if tokens.count() > 1:
+            expired_token = tokens.get(expired=True)
+            ex_time_alive = (datetime.now(timezone.utc) - expired_token.created_at).total_seconds()
+
+            # Delete the expired token in case it has been alive for more than 70 seconds.
+            if ex_time_alive >= 70:
+                expired_token.delete()
+                expired_token = None
+
+        # Get the currently active token, ...
+        token = tokens.get(expired=False)
+    else:
+        # ... or create a new one.
+        token = DocumentToken.objects.create(user=user, document=document)
+
+    # At this point, we've got the user of a token
+
+    if token.document != document:
+        token.delete()
+
+    if expired_token and expired_token.document != document:
+        expired_token.delete()
+
+    # Initialize variable.
+    called = False
+
+    e_called = expired_token.called if expired_token else False
+
+    if token.called or e_called:
+        if token.called:
+            r_token = token
+        else:
+            r_token = expired_token
+
+        time_alive = (datetime.now(timezone.utc) - r_token.created_at).total_seconds()
+
+        if time_alive < 1800:
+            time_left = 1800 - time_alive
+            called = True
+
+            return r_token, None, None, called, r_token.signed
+        else:
+            r_token.delete()
+            token = DocumentToken.objects.create(user=user, document=document)
+
+    time_alive = (datetime.now(timezone.utc) - token.created_at).total_seconds()
+
+    time_left = None
+
+    # If the active token is alive for less than 60 seconds, use it.
+    if time_alive < 60:
+        time_left = 60 - time_alive
+
+    # If the active token is alive for more than 60 and less than
+    # 70 seconds, it is considered the currently expired token.
+    elif time_alive < 70:
+        token.expired = True
+        token.save()
+        expired_token = token
+
+        # A new, active token must be created.
+        token = DocumentToken.objects.create(user=user, document=document)
+        time_left = 60
+
+    # If the active token is alive for more than 70 seconds, it isn't valid anymore.
+    # A new one must be created and used.
+    else:
+        token.delete()
+        token = None
+        token = DocumentToken.objects.create(user=user, document=document)
+        time_left = 60
+
+    return token, time_left, expired_token, False, None
+
+
 class RequestSignDocument(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_document(self, pk):
         try:
-            documents = Document.objects.get(pk=pk)
-            return documents
+            document = Document.objects.get(pk=pk)
+            return document
+        except Document.DoesNotExist:
+            raise exceptions.NotFound
+
+    def get(self, request, pk, *args, **kwargs):
+        # The document we want to start with
+        document = self.get_document(pk=pk)
+
+        # The rest of the documents which will be following the current document
+        documents = Document.objects.filter(insurance_submission=document.insurance_submission)
+
+        # The user to which the tokens will be assigned
+        user = document.insurance_submission.submitter
+
+        token, time_left, expired_token, called, uploaded = refresh_token_validity(user=user, document=document)
+
+        print(documents)
+
+        if not called:
+            response = {
+                'token': str(token.token),
+                'expired_token': str(expired_token.token) if expired_token else None,
+                'time_left': time_left
+            }
+        else:
+            response = {
+                'token': str(token.token),
+                'expired_token': None,
+                'time_left': None,
+                'called': True,
+                'signed': token.signed
+            }
+
+        return Response(response)
+
+
+class CallDocumentToken(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        token = request.data.get('token')
+
+        if not DocumentToken.objects.filter(token=token).exists():
+            return Response(
+                {'TokenNotFound': 'Given token was not found or is not valid anymore.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        token, time_left, expired, token.called, token.uploaded = refresh_token_validity(user=request.user, token=token)
+
+        if token:
+            token.called = True
+            token.save()
+
+            return Response(
+                {'success': 'The token has been called.'},
+                status=status.HTTP_200_OK
+            )
+
+        return Response(
+            {'TokenNotFound': 'Given token was not found or is not valid anymore.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class ProgressReportView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        print(request.user, request.data.get('token'))
+        if DocumentToken.objects.filter(user=request.user, token=request.data.get('token'), called=True).exists():
+            print('test')
+
+            token = DocumentToken.objects.get(token=request.data.get('token'))
+
+            data = {
+                'title': token.document.title,
+                'description': token.document.description,
+                'called': True,
+                'signed': token.signed
+            }
+
+            if token.signed:
+                token.delete()
+
+            return Response(data)
+
+        return Response(
+                {'TokenNotFound': 'Given token not found or not associated with authenticated user.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class SignDocument(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get_document(self, pk):
+        try:
+            document = Document.objects.get(pk=pk)
+            return document
         except Document.DoesNotExist:
             raise exceptions.NotFound
 
     def post(self, request, pk, *args, **kwargs):
+        token = request.data.get('token')
+        signature = request.data.get('signature')
         document = self.get_document(pk=pk)
 
-        documents = Document.objects.filter(insurance_submission=document.insurance_submission)
+        if not signature:
+            raise exceptions.ValidationError({'signature': 'Please provide a valid image file for this field.'})
 
-        print(documents)
+        if not token and not request.user.is_authenticated:
+            raise exceptions.PermissionDenied
+
+        if token:
+            # Check token validitiy here
+            user = token.user
+        elif request.user.is_authenticated:
+            user = request.user
+
+        if document.insurance_submission.submitter != user:
+            raise exceptions.PermissionDenied
+
+        document.signature = signature
+        document.save()
+
+        insert_signature(document, signature)
 
         return Response({})
 
