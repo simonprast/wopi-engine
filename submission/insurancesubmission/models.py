@@ -105,6 +105,8 @@ class Document(models.Model):
         upload_to=create_path, null=True, blank=True
     )
     signature = models.ImageField(default=None, blank=True)
+    pos_x = models.FloatField(null=True, blank=True)
+    pos_y = models.FloatField(null=True, blank=True)
 
 
 class DocumentToken(models.Model):
