@@ -9,12 +9,13 @@ import json
 
 from datetime import datetime, timezone
 
+from django.core.files import File
 from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 
 from rest_framework import exceptions, generics, permissions, status
 from rest_framework.response import Response
 
-from submission.insurancesubmission.insert_signature import insert_signature
+from submission.insurancesubmission.insert_pdf_data import insert_payment_data, insert_signature
 from submission.insurancesubmission.models import InsuranceSubmission, Document, DocumentToken
 
 from user.api.dev.serializers import LoginUserSerializer, UserDetailSerializer
@@ -208,6 +209,13 @@ class AddTemplateDocument(generics.GenericAPIView):
         except InsuranceSubmission.DoesNotExist:
             raise exceptions.NotFound
 
+    def get_document(self, pk):
+        try:
+            document = Document.objects.get(pk=pk)
+            return document
+        except Document.DoesNotExist:
+            raise exceptions.NotFound
+
     def post(self, request, pk, *args, **kwargs):
         # Get the requested submission
         submission = self.get_submission(pk=pk)
@@ -217,8 +225,20 @@ class AddTemplateDocument(generics.GenericAPIView):
         if submission.active:
             raise exceptions.ValidationError({'error': 'You cannot change agreement files on active contracts.'})
 
-        if request.data.__contains__('id'):
-            document = Document.objects.get(pk=request.data.get('id'))
+        if request.data.get('id'):
+            document = self.get_document(request.data.get('id'))
+
+            if request.data.get('title'):
+                document.title = request.data.get('title')
+
+            if request.data.get('description'):
+                document.description = request.data.get('description')
+
+            document.save()
+        elif request.data.get('remove'):
+            document = self.get_document(request.data.get('remove'))
+            document.delete()
+            return Response({'success': 'Successfully deleted document with id ' + request.data.get('remove') + '.'})
         else:
             document = Document.objects.create(
                 insurance_submission=submission,
@@ -498,6 +518,8 @@ class SignDocument(generics.GenericAPIView):
         signature = request.data.get('signature')
         document = self.get_document(pk=pk)
 
+        # valid document?
+
         if not signature:
             raise exceptions.ValidationError({'signature': 'Please provide a valid image file for this field.'})
 
@@ -565,6 +587,87 @@ class AddSubmissionDocument(generics.GenericAPIView):
                 'denied': submission.denied,
             }, status=status.HTTP_200_OK
         )
+
+
+class AddPaymentData(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_submission(self, pk):
+        try:
+            submission = InsuranceSubmission.objects.get(pk=pk)
+            return submission
+        except InsuranceSubmission.DoesNotExist:
+            raise exceptions.NotFound
+
+    def post(self, request, pk, *args, **kwargs):
+        # Get the requested submission
+        submission = self.get_submission(pk=pk)
+
+        if not submission.submitter == request.user and not request.user.is_staff:
+            raise exceptions.PermissionDenied
+
+        if submission.active:
+            return Response({'error': 'You cannot change agreement files on active contracts.'})
+
+        iban = request.data.get('iban')
+
+        if not iban:
+            return exceptions.ValidationError({'error': 'Field uuid is required.'})
+
+        title = 'Lastschriftverfahren ' + submission.submitter.first_name + ' ' + submission.submitter.last_name
+
+        document = Document.objects.create(
+            title=title,
+            description='SEPA-Lastschriftverfahren',
+            insurance_submission=submission
+        )
+
+        vav_template = open('vav3.pdf', 'rb')
+        vav_template_djangofile = File(vav_template)
+        document.template.save(title + '.pdf', vav_template_djangofile)
+        vav_template.close()
+
+        provider_id = None
+
+        # data coordinates in mm
+        vav = {
+            'full_name': [64, 71.5],
+            'first_name': [64, 120.5],
+            'last_name': [64, 128.64],
+            'street': [64, 136.78],
+            'street_number': [64, 144.92],
+            'zipcode': [64, 153.06],
+            'city': [64, 161.2],
+            'country': [64, 169.34],
+            'birthdate': [64, 177.48],
+            'iban': [64, 185.62]
+        }
+
+        if provider_id:
+            if provider_id == 'vav':
+                pass
+            elif provider_id == 'ws':
+                pass
+        else:
+            user = submission.submitter
+            data = {
+                'full_name': user.first_name + ' ' + user.last_name,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'street': user.address_1,
+                'street_number': user.address_1,
+                'zipcode': user.zipcode,
+                'city': user.zipcode,
+                'country': 'Österreich',
+                'birthdate': str(user.birthdate),
+                'iban': iban
+            }
+
+            coordinates = vav
+
+        insert_payment_data(document, data, coordinates)
+
+        return Response({'iban': 'iban'})
 
 
 def translate_options():

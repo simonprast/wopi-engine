@@ -6,3 +6,5 @@ phonenumbers==8.12.13
 pillow==8.0
 django-cors-headers
 django-mail-templated
+PyPDF2==1.26.0
+fpdf2==2.3.1
