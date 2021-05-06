@@ -6,6 +6,7 @@
 
 
 import json
+import imghdr
 
 from datetime import datetime, timezone
 
@@ -221,6 +222,7 @@ class AddTemplateDocument(generics.GenericAPIView):
         submission = self.get_submission(pk=pk)
         pos_x = request.data.get('pos_x')
         pos_y = request.data.get('pos_y')
+        page_index = request.data.get('page_index')
 
         if submission.active:
             raise exceptions.ValidationError({'error': 'You cannot change agreement files on active contracts.'})
@@ -250,12 +252,16 @@ class AddTemplateDocument(generics.GenericAPIView):
                 and (type(request.data.get('template')) is InMemoryUploadedFile
                      or type(request.data.get('template')) is TemporaryUploadedFile)):
             document.template = request.data.get('template')
-            document.save()
 
         if pos_x and pos_y:
             document.pos_x = pos_x
             document.pos_y = pos_y
-            document.save()
+
+        if page_index:
+            print('test')
+            document.page_index = page_index
+
+        document.save()
 
         submission.status = 'o'
         submission.save()
@@ -438,7 +444,8 @@ class RequestSignDocument(generics.GenericAPIView):
             'document': document.document,
             'signature': document.signature,
             'pos_x': document.pos_x,
-            'pos_y': document.pos_y
+            'pos_y': document.pos_y,
+            'page_index': document.page_index
         }
 
         if not called:
@@ -488,7 +495,8 @@ class CallDocumentToken(generics.GenericAPIView):
                 'document': document.document,
                 'signature': document.signature,
                 'pos_x': document.pos_x,
-                'pos_y': document.pos_y
+                'pos_y': document.pos_y,
+                'page_index': document.page_index
             }
 
             return Response(
@@ -524,7 +532,8 @@ class ProgressReportView(generics.GenericAPIView):
                 'document': document.document,
                 'signature': document.signature,
                 'pos_x': document.pos_x,
-                'pos_y': document.pos_y
+                'pos_y': document.pos_y,
+                'page_index': document.page_index
             }
 
             data = {
@@ -562,6 +571,17 @@ class SignDocument(generics.GenericAPIView):
         if not signature:
             raise exceptions.ValidationError({'signature': 'Please provide a valid image file for this field.'})
 
+        if imghdr.what(signature) is None:
+            return Response(
+                {
+                    'error': [
+                        'InvalidSignatureFile',
+                        'Signature seems to be not a valid image file.'
+                    ]
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         if not token and not request.user.is_authenticated:
             raise exceptions.PermissionDenied
 
@@ -583,11 +603,12 @@ class SignDocument(generics.GenericAPIView):
             'id': document.id,
             'title': document.title,
             'description': document.description,
-            'template': document.template,
-            'document': document.document,
-            'signature': document.signature,
+            'template': document.template.url if document.template else None,
+            'document': document.document.url if document.document else None,
+            'signature': document.signature.url if document.signature else None,
             'pos_x': document.pos_x,
-            'pos_y': document.pos_y
+            'pos_y': document.pos_y,
+            'page_index': document.page_index
         }
 
         return Response({
@@ -659,12 +680,18 @@ class AddPaymentData(generics.GenericAPIView):
             raise exceptions.PermissionDenied
 
         if submission.active:
-            return exceptions.ValidationError({'error': 'You cannot change agreement files on active contracts.'})
+            raise exceptions.ValidationError({'error': 'You cannot change agreement files on active contracts.'})
 
         iban = request.data.get('iban')
+        bic = request.data.get('bic')
 
         if not iban:
-            return exceptions.ValidationError({'error': 'Field iban is required.'})
+            raise exceptions.ValidationError({'iban': 'This field is required.'})
+
+        provider_id = 'ws'
+
+        if provider_id == 'ws' and not bic:
+            raise exceptions.ValidationError({'bic': 'This field is required for insurance WS.'})
 
         title = 'Lastschriftverfahren ' + submission.submitter.first_name + ' ' + submission.submitter.last_name
 
@@ -674,49 +701,69 @@ class AddPaymentData(generics.GenericAPIView):
             insurance_submission=submission
         )
 
-        # Create a file for the Django FileField
-        vav_template = open('static/vav-template.pdf', 'rb')
-        vav_template_djangofile = File(vav_template)
-        document.template.save(title + '.pdf', vav_template_djangofile)
-        vav_template.close()
-
-        provider_id = None
-
-        # data coordinates in mm
-        vav = {
-            'full_name': [64, 71.5],
-            'first_name': [64, 120.5],
-            'last_name': [64, 128.64],
-            'street': [64, 136.78],
-            'street_number': [64, 144.92],
-            'zipcode': [64, 153.06],
-            'city': [64, 161.2],
-            'country': [64, 169.34],
-            'birthdate': [64, 177.48],
-            'iban': [64, 185.62]
-        }
+        user = submission.submitter
 
         if provider_id:
             if provider_id == 'vav':
-                pass
-            elif provider_id == 'ws':
-                pass
-        else:
-            user = submission.submitter
-            data = {
-                'full_name': user.first_name + ' ' + user.last_name,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'street': user.address_1,
-                'street_number': user.address_1,
-                'zipcode': user.zipcode,
-                'city': user.zipcode,
-                'country': 'Österreich',
-                'birthdate': str(user.birthdate),
-                'iban': iban
-            }
+                # data coordinates in mm
+                vav_co = {
+                    'full_name': [64, 71.5],
+                    'first_name': [64, 120.5],
+                    'last_name': [64, 128.64],
+                    'street': [64, 136.78],
+                    'street_number': [64, 144.92],
+                    'zipcode': [64, 153.06],
+                    'city': [64, 161.2],
+                    'country': [64, 169.34],
+                    'birthdate': [64, 177.48],
+                    'iban': [64, 185.62]
+                }
 
-            coordinates = vav
+                coordinates = vav_co
+
+                data = {
+                    'full_name': user.first_name + ' ' + user.last_name,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'street': user.address_1,
+                    'street_number': user.address_1,
+                    'zipcode': user.zipcode,
+                    'city': user.zipcode,
+                    'country': 'Österreich',
+                    'birthdate': str(user.birthdate),
+                    'iban': iban
+                }
+            elif provider_id == 'ws':
+                # data coordinates in mm
+                ws_co = {
+                    'last_name': [25, 168],
+                    'first_name': [102.5, 168],
+                    'address': [25, 183],
+                    'zip_city': [25, 198],
+                    'iban': [34, 222.5],
+                    'bic': [34, 237.5]
+                }
+
+                data = {
+                    'last_name': user.last_name,
+                    'first_name': user.first_name,
+                    'address': user.address_1,
+                    'zip_city': str(user.zipcode) + ' ' + str(user.zipcode),
+                    'iban': iban,
+                    'bic': bic
+                }
+
+                coordinates = ws_co
+        else:
+            raise exceptions.ValidationError({
+                'error': 'Provider id is not able to create payment data sheet. Submission pID: ' + str(provider_id)
+            })
+
+        # Create a file for the Django FileField
+        template = open('static/' + provider_id + '-template.pdf', 'rb')
+        template_djangofile = File(template)
+        document.template.save(title + '.pdf', template_djangofile)
+        template.close()
 
         insert_payment_data(document, data, coordinates)
 

@@ -104,9 +104,12 @@ class Document(models.Model):
     document = models.FileField(
         upload_to=create_path, null=True, blank=True
     )
-    signature = models.ImageField(default=None, blank=True)
+    signature = models.ImageField(
+        upload_to=create_path, default=None, blank=True
+    )
     pos_x = models.FloatField(null=True, blank=True)
     pos_y = models.FloatField(null=True, blank=True)
+    page_index = models.IntegerField(null=True, blank=True)
 
 
 class DocumentToken(models.Model):
