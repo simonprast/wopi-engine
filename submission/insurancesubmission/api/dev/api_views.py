@@ -18,6 +18,8 @@ from rest_framework.response import Response
 
 from submission.insurancesubmission.insert_pdf_data import insert_payment_data, insert_signature
 from submission.insurancesubmission.models import InsuranceSubmission, Document, DocumentToken
+from submission.insurancesubmission.create_insurance_pdf import create_pdf
+
 
 from user.api.dev.serializers import LoginUserSerializer, UserDetailSerializer
 from user.create_or_login import create_or_login
@@ -56,6 +58,7 @@ class SubmitInsurance(generics.GenericAPIView):
             return_dict, auth_status, user = create_or_login(
                 register_serializer, login_serializer, request, validated=True)
 
+            create_pdf(request)
             # Save the submission through the serializer
             submission = submit_serializer.save(user=user)
 
@@ -65,6 +68,8 @@ class SubmitInsurance(generics.GenericAPIView):
             if submission == 'DuplicateError':
                 return Response({'DuplicateError': 'An identical submission already exists.'},
                                 status=status.HTTP_403_FORBIDDEN)
+
+            create_pdf(request, submission)
 
             # The endpoint returns the create_or_login return_dict containing authentication
             # info and appends the return string of the created submission on success.
@@ -87,6 +92,8 @@ class SubmitInsurance(generics.GenericAPIView):
                     return Response({'DuplicateError': 'An identical submission already exists.'},
                                     status=status.HTTP_403_FORBIDDEN)
 
+
+                create_pdf(request, submission)
                 return Response({'success': str(submission)}, status=status.HTTP_201_CREATED)
 
 
