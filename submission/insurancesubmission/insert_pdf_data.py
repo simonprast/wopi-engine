@@ -39,7 +39,7 @@ def insert_signature(document, signature):
     pos_y_mm = pdf.h * document.pos_y
 
     pdf.set_xy(pos_x_mm, pos_y_mm)
-    pdf.image('media/' + document.signature.name, w=40)
+    pdf.image(document.signature.name, w=40)
     # pdf.cell(0, 0, ' ', 0, 0, 'L')
 
     # Merge the files, using the document (+ its template file) and the newly created data PDF.

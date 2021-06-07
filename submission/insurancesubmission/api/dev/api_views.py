@@ -4,12 +4,14 @@
 # Copyright (c) 2020 - Simon Prast
 #
 
-
+import base64
 import json
 import imghdr
+import os
 
 from datetime import datetime, timezone
 
+from django.conf import settings
 from django.core.files import File
 from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 
@@ -58,7 +60,6 @@ class SubmitInsurance(generics.GenericAPIView):
             return_dict, auth_status, user = create_or_login(
                 register_serializer, login_serializer, request, validated=True)
 
-            create_pdf(request)
             # Save the submission through the serializer
             submission = submit_serializer.save(user=user)
 
@@ -91,7 +92,6 @@ class SubmitInsurance(generics.GenericAPIView):
                 if submission == 'DuplicateError':
                     return Response({'DuplicateError': 'An identical submission already exists.'},
                                     status=status.HTTP_403_FORBIDDEN)
-
 
                 create_pdf(request, submission)
                 return Response({'success': str(submission)}, status=status.HTTP_201_CREATED)
@@ -265,7 +265,6 @@ class AddTemplateDocument(generics.GenericAPIView):
             document.pos_y = pos_y
 
         if page_index:
-            print('test')
             document.page_index = page_index
 
         document.save()
@@ -300,8 +299,6 @@ class RequestSignSubmission(generics.GenericAPIView):
         submission = self.get_submission(pk=pk)
 
         documents = Document.objects.filter(insurance_submission=submission)
-
-        print(documents)
 
         token, time_left, expired_token, called, signed = refresh_token_validity(request.user, documents[0])
 
@@ -430,7 +427,7 @@ class RequestSignDocument(generics.GenericAPIView):
         except Document.DoesNotExist:
             raise exceptions.NotFound
 
-    def get(self, request, pk, *args, **kwargs):
+    def post(self, request, pk, *args, **kwargs):
         # The document which should be signed.
         document = self.get_document(pk=pk)
 
@@ -447,9 +444,9 @@ class RequestSignDocument(generics.GenericAPIView):
             'id': document.id,
             'title': document.title,
             'description': document.description,
-            'template': document.template,
-            'document': document.document,
-            'signature': document.signature,
+            'template': document.template.url if document.template else None,
+            'document': document.document.url if document.document else None,
+            'signature': document.signature.url if document.signature else None,
             'pos_x': document.pos_x,
             'pos_y': document.pos_y,
             'page_index': document.page_index
@@ -487,7 +484,7 @@ class CallDocumentToken(generics.GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        token, time_left, expired, token.called, token.uploaded = refresh_token_validity(user=request.user, token=token)
+        token, time_left, expired, token.called, token.uploaded = refresh_token_validity(token=token)
 
         if token:
             token.called = True
@@ -498,9 +495,9 @@ class CallDocumentToken(generics.GenericAPIView):
                 'id': document.id,
                 'title': document.title,
                 'description': document.description,
-                'template': document.template,
-                'document': document.document,
-                'signature': document.signature,
+                'template': document.template.url if document.template else None,
+                'document': document.document.url if document.document else None,
+                'signature': document.signature.url if document.signature else None,
                 'pos_x': document.pos_x,
                 'pos_y': document.pos_y,
                 'page_index': document.page_index
@@ -524,10 +521,7 @@ class ProgressReportView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        print(request.user, request.data.get('token'))
         if DocumentToken.objects.filter(user=request.user, token=request.data.get('token'), called=True).exists():
-            print('test')
-
             token = DocumentToken.objects.get(token=request.data.get('token'))
 
             document = token.document
@@ -535,9 +529,9 @@ class ProgressReportView(generics.GenericAPIView):
                 'id': document.id,
                 'title': document.title,
                 'description': document.description,
-                'template': document.template,
-                'document': document.document,
-                'signature': document.signature,
+                'template': document.template.url if document.template else None,
+                'document': document.document.url if document.document else None,
+                'signature': document.signature.url if document.signature else None,
                 'pos_x': document.pos_x,
                 'pos_y': document.pos_y,
                 'page_index': document.page_index
@@ -563,64 +557,87 @@ class ProgressReportView(generics.GenericAPIView):
 class SignDocument(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
 
-    def get_document(self, pk):
+    def get_document(self, token):
         try:
-            document = Document.objects.get(pk=pk)
-            return document
+            document_token = DocumentToken.objects.get(token=token, called=True)
+            return document_token.document
         except Document.DoesNotExist:
             raise exceptions.NotFound
 
-    def post(self, request, pk, *args, **kwargs):
+    def get_token(self, token):
+        try:
+            document_token = DocumentToken.objects.get(token=token, called=True)
+            return document_token
+        except DocumentToken.DoesNotExist:
+            raise exceptions.NotFound
+
+    def post(self, request, *args, **kwargs):
         token = request.data.get('token')
         signature = request.data.get('signature')
-        document = self.get_document(pk=pk)
+        document = self.get_document(token=token)
 
         if not signature:
             raise exceptions.ValidationError({'signature': 'Please provide a valid image file for this field.'})
 
-        if imghdr.what(signature) is None:
-            return Response(
-                {
-                    'error': [
-                        'InvalidSignatureFile',
-                        'Signature seems to be not a valid image file.'
-                    ]
-                },
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        signature = signature[22:]
+        signature = base64.b64decode(signature)
 
-        if not token and not request.user.is_authenticated:
-            raise exceptions.PermissionDenied
+        image_path = os.path.join(settings.MEDIA_ROOT, "tmp")
 
-        if token:
-            # Check token validitiy here
-            user = token.user
-        elif request.user.is_authenticated:
-            user = request.user
+        if not os.path.exists(image_path):
+            os.makedirs(image_path)
 
-        if document.insurance_submission.submitter != user:
-            raise exceptions.PermissionDenied
+        image = open(image_path + "/image.png", "wb")
+        image.write(signature)
+        image.close()
 
-        document.signature = signature
-        document.save()
+        with open(image_path + "/image.png", "rb") as f:
+            image = File(f)
 
-        insert_signature(document, signature)
+            if imghdr.what(image) is None:
+                return Response(
+                    {
+                        'error': [
+                            'InvalidSignatureFile',
+                            'Signature seems to be not a valid image file.'
+                        ]
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
-        document_data = {
-            'id': document.id,
-            'title': document.title,
-            'description': document.description,
-            'template': document.template.url if document.template else None,
-            'document': document.document.url if document.document else None,
-            'signature': document.signature.url if document.signature else None,
-            'pos_x': document.pos_x,
-            'pos_y': document.pos_y,
-            'page_index': document.page_index
-        }
+            if not token and not request.user.is_authenticated:
+                raise exceptions.PermissionDenied
 
-        return Response({
-            'document': document_data
-        })
+            if token:
+                token_object = self.get_token(token=token)
+                # Check token validitiy here
+                user = token_object.user
+            elif request.user.is_authenticated:
+                user = request.user
+
+            if document.insurance_submission.submitter != user:
+                raise exceptions.PermissionDenied
+
+            document.signature = image
+            document.save()
+
+            insert_signature(document, image)
+
+            document_data = {
+                'id': document.id,
+                'title': document.title,
+                'description': document.description,
+                'template': document.template.url if document.template else None,
+                'document': document.document.url if document.document else None,
+                'signature': document.signature.url if document.signature else None,
+                'pos_x': document.pos_x,
+                'pos_y': document.pos_y,
+                'page_index': document.page_index
+            }
+
+            return Response({
+                'document': document_data
+            })
 
 
 # class AddSubmissionDocument(generics.GenericAPIView):

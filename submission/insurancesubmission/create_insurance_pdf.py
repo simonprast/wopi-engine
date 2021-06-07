@@ -1,4 +1,6 @@
-import json, uuid, os
+import json
+import uuid
+import os
 
 from fpdf import FPDF
 
