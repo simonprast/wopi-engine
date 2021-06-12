@@ -8,7 +8,7 @@
 from django import forms
 from django.contrib import admin
 
-from .models import InsuranceSubmission
+from .models import InsuranceSubmission, Document, DocumentToken
 
 
 class InsuranceSubmissionCreationForm(forms.ModelForm):
@@ -63,4 +63,12 @@ class InsuranceSubmissionAdmin(admin.ModelAdmin):
     filter_horizontal = ()
 
 
+class DocumentTokenAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "document", "token", "expired", "called", "signed")
+
+    search_fields = ("user",)
+
+
 admin.site.register(InsuranceSubmission, InsuranceSubmissionAdmin)
+admin.site.register(Document)
+admin.site.register(DocumentToken, DocumentTokenAdmin)

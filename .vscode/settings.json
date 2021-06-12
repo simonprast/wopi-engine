@@ -5,5 +5,5 @@
     "python.linting.flake8Args": [
         "--max-line-length=120",
     ],
-    "python.pythonPath": "c:\\Users\\simon\\OneDrive\\Documents\\git\\wopi-engine\\.venv\\Scripts\\python.exe",
+    "python.pythonPath": ".venv\\Scripts\\python.exe",
 }

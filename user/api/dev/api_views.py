@@ -17,7 +17,8 @@ from rest_framework.response import Response
 
 from submission.damagereport.models import DamageReport
 from submission.id.models import IDSubmission
-from submission.insurancesubmission.models import InsuranceSubmission
+from submission.insurancesubmission.models import Document, InsuranceSubmission
+from submission.insurancesubmission.api.dev.serializers import DocumentSerializer
 
 from user.authentication import refresh_token, remove_token
 
@@ -420,6 +421,11 @@ def create_user_dict(user):
 
         # Every submission's data is saved to a dictionary and appended to the submission data list
         for submission in insurance_submissions:
+            # Get all documents in a submission
+            documents = Document.objects.filter(insurance_submission=submission)
+
+            serializer = DocumentSerializer(documents, many=True)
+
             submission_dict = {
                 'id': submission.id,
                 'insurance': str(submission.insurance),
@@ -432,16 +438,7 @@ def create_user_dict(user):
                     'status': submission.status
                 },
                 'document': None if not submission.policy_document else submission.policy_document.url,
-                'template_1': None if not submission.document_template_1 else submission.document_template_1.url,
-                'template_2': None if not submission.document_template_2 else submission.document_template_2.url,
-                'template_3': None if not submission.document_template_3 else submission.document_template_3.url,
-                'template_4': None if not submission.document_template_4 else submission.document_template_4.url,
-                'template_5': None if not submission.document_template_5 else submission.document_template_5.url,
-                'agreement_1': None if not submission.document_submission_1 else submission.document_submission_1.url,
-                'agreement_2': None if not submission.document_submission_2 else submission.document_submission_2.url,
-                'agreement_3': None if not submission.document_submission_3 else submission.document_submission_3.url,
-                'agreement_4': None if not submission.document_submission_4 else submission.document_submission_4.url,
-                'agreement_5': None if not submission.document_submission_5 else submission.document_submission_5.url,
+                'submission_documents': serializer.data,
                 'data': json.loads((submission.data).replace("\'", "\""))
             }
             submission_list.append(submission_dict)

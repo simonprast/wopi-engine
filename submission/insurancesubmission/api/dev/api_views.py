@@ -4,20 +4,30 @@
 # Copyright (c) 2020 - Simon Prast
 #
 
-
+import base64
 import json
+import imghdr
+import os
 
+from datetime import datetime, timezone
+
+from django.conf import settings
+from django.core.files import File
 from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
 
 from rest_framework import exceptions, generics, permissions, status
 from rest_framework.response import Response
 
-from submission.insurancesubmission.models import InsuranceSubmission
+from submission.insurancesubmission.insert_pdf_data import insert_payment_data, insert_signature
+from submission.insurancesubmission.models import InsuranceSubmission, Document, DocumentToken
+from submission.insurancesubmission.create_insurance_pdf import create_pdf
+
 
 from user.api.dev.serializers import LoginUserSerializer, UserDetailSerializer
 from user.create_or_login import create_or_login
 
-from .serializers import InsuranceSubmissionSerializer
+# from .permissions import HasTokenOrIsAuthenticated
+from .serializers import InsuranceSubmissionSerializer, DocumentSerializer
 
 
 class SubmitInsurance(generics.GenericAPIView):
@@ -60,6 +70,8 @@ class SubmitInsurance(generics.GenericAPIView):
                 return Response({'DuplicateError': 'An identical submission already exists.'},
                                 status=status.HTTP_403_FORBIDDEN)
 
+            create_pdf(request, submission)
+
             # The endpoint returns the create_or_login return_dict containing authentication
             # info and appends the return string of the created submission on success.
             return_dict.update({'success': str(submission)})
@@ -81,6 +93,7 @@ class SubmitInsurance(generics.GenericAPIView):
                     return Response({'DuplicateError': 'An identical submission already exists.'},
                                     status=status.HTTP_403_FORBIDDEN)
 
+                create_pdf(request, submission)
                 return Response({'success': str(submission)}, status=status.HTTP_201_CREATED)
 
 
@@ -108,7 +121,10 @@ class GetInsuranceSubmissions(generics.GenericAPIView):
 
     def create_submission_list(self, submissions):
         submission_list = []
+
         for submission in submissions:
+            documents = Document.objects.filter(insurance_submission=submission)
+            serializer = DocumentSerializer(documents, many=True)
             submission_obj = {
                 'id': submission.id,
                 'insurance': str(submission.insurance),
@@ -121,16 +137,7 @@ class GetInsuranceSubmissions(generics.GenericAPIView):
                     'status': submission.status
                 },
                 'document': None if not submission.policy_document else submission.policy_document.url,
-                'template_1': None if not submission.document_template_1 else submission.document_template_1.url,
-                'template_2': None if not submission.document_template_2 else submission.document_template_2.url,
-                'template_3': None if not submission.document_template_3 else submission.document_template_3.url,
-                'template_4': None if not submission.document_template_4 else submission.document_template_4.url,
-                'template_5': None if not submission.document_template_5 else submission.document_template_5.url,
-                'agreement_1': None if not submission.document_submission_1 else submission.document_submission_1.url,
-                'agreement_2': None if not submission.document_submission_2 else submission.document_submission_2.url,
-                'agreement_3': None if not submission.document_submission_3 else submission.document_submission_3.url,
-                'agreement_4': None if not submission.document_submission_4 else submission.document_submission_4.url,
-                'agreement_5': None if not submission.document_submission_5 else submission.document_submission_5.url,
+                'submission_documents': None if len(documents) == 0 else serializer.data,
                 'data': json.loads((submission.data).replace("\'", "\"")),
                 'options': json.loads(translate_options())
             }
@@ -210,63 +217,482 @@ class AddTemplateDocument(generics.GenericAPIView):
         except InsuranceSubmission.DoesNotExist:
             raise exceptions.NotFound
 
+    def get_document(self, pk):
+        try:
+            document = Document.objects.get(pk=pk)
+            return document
+        except Document.DoesNotExist:
+            raise exceptions.NotFound
+
     def post(self, request, pk, *args, **kwargs):
         # Get the requested submission
         submission = self.get_submission(pk=pk)
+        pos_x = request.data.get('pos_x')
+        pos_y = request.data.get('pos_y')
+        page_index = request.data.get('page_index')
 
         if submission.active:
-            return Response({'error': 'You cannot change agreement files on active contracts.'})
+            raise exceptions.ValidationError({'error': 'You cannot change agreement files on active contracts.'})
 
-        if (request.data.__contains__('template_1')
-                and (type(request.data.get('template_1')) is InMemoryUploadedFile
-                     or type(request.data.get('template_1')) is TemporaryUploadedFile)):
-            submission.document_template_1 = request.data.get('template_1')
+        if request.data.get('id'):
+            document = self.get_document(request.data.get('id'))
 
-        if (request.data.__contains__('template_2')
-                and (type(request.data.get('template_2')) is InMemoryUploadedFile
-                     or type(request.data.get('template_2')) is TemporaryUploadedFile)):
-            submission.document_template_2 = request.data.get('template_2')
+            if request.data.get('title'):
+                document.title = request.data.get('title')
 
-        if (request.data.__contains__('template_3')
-                and (type(request.data.get('template_3')) is InMemoryUploadedFile
-                     or type(request.data.get('template_3')) is TemporaryUploadedFile)):
-            submission.document_template_3 = request.data.get('template_3')
+            if request.data.get('description'):
+                document.description = request.data.get('description')
 
-        if (request.data.__contains__('template_4')
-                and (type(request.data.get('template_4')) is InMemoryUploadedFile
-                     or type(request.data.get('template_4')) is TemporaryUploadedFile)):
-            submission.document_template_4 = request.data.get('template_4')
+            document.save()
+        elif request.data.get('remove'):
+            document = self.get_document(request.data.get('remove'))
+            document.delete()
+            return Response({'success': 'Successfully deleted document with id ' + request.data.get('remove') + '.'})
+        else:
+            document = Document.objects.create(
+                insurance_submission=submission,
+                title=request.data.get('title'),
+                description=request.data.get('description')
+            )
 
-        if (request.data.__contains__('template_5')
-                and (type(request.data.get('template_5')) is InMemoryUploadedFile
-                     or type(request.data.get('template_5')) is TemporaryUploadedFile)):
-            submission.document_template_5 = request.data.get('template_5')
+        if (request.data.__contains__('template')
+                and (type(request.data.get('template')) is InMemoryUploadedFile
+                     or type(request.data.get('template')) is TemporaryUploadedFile)):
+            document.template = request.data.get('template')
+
+        if pos_x and pos_y:
+            document.pos_x = pos_x
+            document.pos_y = pos_y
+
+        if page_index:
+            document.page_index = page_index
+
+        document.save()
 
         submission.status = 'o'
-
         submission.save()
+
+        documents = Document.objects.filter(insurance_submission=submission)
+        serializer = DocumentSerializer(documents, many=True)
 
         return Response(
             {
-                'policy_id': submission.policy_id,
-                'template_1': None if not submission.document_template_1 else submission.document_template_1.url,
-                'template_2': None if not submission.document_template_2 else submission.document_template_2.url,
-                'template_3': None if not submission.document_template_3 else submission.document_template_3.url,
-                'template_4': None if not submission.document_template_4 else submission.document_template_4.url,
-                'template_5': None if not submission.document_template_5 else submission.document_template_5.url,
+                'submission_id': submission.id,
+                'documents': None if documents.__len__ == 0 else serializer.data,
                 'active': submission.active,
                 'denied': submission.denied,
             }, status=status.HTTP_200_OK
         )
 
 
-class AddSubmissionDocument(generics.GenericAPIView):
+class RequestSignSubmission(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_submission(self, pk):
         try:
-            submissions = InsuranceSubmission.objects.get(pk=pk)
-            return submissions
+            submission = InsuranceSubmission.objects.get(pk=pk)
+            return submission
+        except InsuranceSubmission.DoesNotExist:
+            raise exceptions.NotFound
+
+    def get(self, request, pk, *args, **kwargs):
+        submission = self.get_submission(pk=pk)
+
+        documents = Document.objects.filter(insurance_submission=submission)
+
+        token, time_left, expired_token, called, signed = refresh_token_validity(request.user, documents[0])
+
+        if not called:
+            response = {
+                'token': str(token.token),
+                'expired_token': str(expired_token.token) if expired_token else None,
+                'time_left': time_left
+            }
+        else:
+            response = {
+                'token': str(token.token),
+                'expired_token': None,
+                'time_left': None,
+                'called': True,
+                'signed': signed
+            }
+
+        return Response(response)
+
+
+def refresh_token_validity(user=None, document=None, token=None, force=None):
+    if user and token:
+        raise exceptions.ValidationError({'error': 'You cannot provide user and token value.'})
+
+    # Check a specific token.
+    if token:
+        if DocumentToken.objects.filter(token=token).exists():
+            token = DocumentToken.objects.get(token=token)
+
+            # Get the user to whom the given token belongs to.
+            user = token.user
+
+    if force:
+        DocumentToken.objets.filter(user=user).delete()
+
+    # Initialize variable.
+    expired_token = None
+
+    if DocumentToken.objects.filter(user=user).exists():
+        tokens = DocumentToken.objects.filter(user=user)
+
+        # If there exists more than one token for a user, one of them must be expired.
+        if tokens.count() > 1:
+            expired_token = tokens.get(expired=True)
+            ex_time_alive = (datetime.now(timezone.utc) - expired_token.created_at).total_seconds()
+
+            # Delete the expired token in case it has been alive for more than 70 seconds.
+            if ex_time_alive >= 70:
+                expired_token.delete()
+                expired_token = None
+
+        # Get the currently active token, ...
+        token = tokens.get(expired=False)
+    else:
+        # ... or create a new one.
+        token = DocumentToken.objects.create(user=user, document=document)
+
+    # At this point, we've got the user of a token
+
+    if token.document != document:
+        token.delete()
+
+    if expired_token and expired_token.document != document:
+        expired_token.delete()
+
+    # Initialize variable.
+    called = False
+
+    e_called = expired_token.called if expired_token else False
+
+    if token.called or e_called:
+        if token.called:
+            r_token = token
+        else:
+            r_token = expired_token
+
+        time_alive = (datetime.now(timezone.utc) - r_token.created_at).total_seconds()
+
+        if time_alive < 1800:
+            time_left = 1800 - time_alive
+            called = True
+
+            return r_token, None, None, called, r_token.signed
+        else:
+            r_token.delete()
+            token = DocumentToken.objects.create(user=user, document=document)
+
+    time_alive = (datetime.now(timezone.utc) - token.created_at).total_seconds()
+
+    time_left = None
+
+    # If the active token is alive for less than 60 seconds, use it.
+    if time_alive < 60:
+        time_left = 60 - time_alive
+
+    # If the active token is alive for more than 60 and less than
+    # 70 seconds, it is considered the currently expired token.
+    elif time_alive < 70:
+        token.expired = True
+        token.save()
+        expired_token = token
+
+        # A new, active token must be created.
+        token = DocumentToken.objects.create(user=user, document=document)
+        time_left = 60
+
+    # If the active token is alive for more than 70 seconds, it isn't valid anymore.
+    # A new one must be created and used.
+    else:
+        token.delete()
+        token = None
+        token = DocumentToken.objects.create(user=user, document=document)
+        time_left = 60
+
+    return token, time_left, expired_token, False, None
+
+
+class RequestSignDocument(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_document(self, pk):
+        try:
+            document = Document.objects.get(pk=pk)
+            return document
+        except Document.DoesNotExist:
+            raise exceptions.NotFound
+
+    def post(self, request, pk, *args, **kwargs):
+        # The document which should be signed.
+        document = self.get_document(pk=pk)
+
+        # If force is of true value, a new token will be forced even if a called token did already exist.
+        force = request.data.get('force')
+
+        # The user to which the tokens will be assigned.
+        user = document.insurance_submission.submitter
+
+        token, time_left, expired_token, called, uploaded = refresh_token_validity(
+            user=user, document=document, force=force)
+
+        document_data = {
+            'id': document.id,
+            'title': document.title,
+            'description': document.description,
+            'template': document.template.url if document.template else None,
+            'document': document.document.url if document.document else None,
+            'signature': document.signature.url if document.signature else None,
+            'pos_x': document.pos_x,
+            'pos_y': document.pos_y,
+            'page_index': document.page_index
+        }
+
+        if not called:
+            response = {
+                'document': document_data,
+                'token': str(token.token),
+                'expired_token': str(expired_token.token) if expired_token else None,
+                'time_left': time_left
+            }
+        else:
+            response = {
+                'document': document_data,
+                'token': str(token.token),
+                'expired_token': None,
+                'time_left': None,
+                'called': True,
+                'signed': token.signed
+            }
+
+        return Response(response)
+
+
+class CallDocumentToken(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        token = request.data.get('token')
+
+        if not DocumentToken.objects.filter(token=token).exists():
+            return Response(
+                {'TokenNotFound': 'Given token was not found or is not valid anymore.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        token, time_left, expired, token.called, token.uploaded = refresh_token_validity(token=token)
+
+        if token:
+            token.called = True
+            token.save()
+
+            document = token.document
+            document_data = {
+                'id': document.id,
+                'title': document.title,
+                'description': document.description,
+                'template': document.template.url if document.template else None,
+                'document': document.document.url if document.document else None,
+                'signature': document.signature.url if document.signature else None,
+                'pos_x': document.pos_x,
+                'pos_y': document.pos_y,
+                'page_index': document.page_index
+            }
+
+            return Response(
+                {
+                    'success': 'The token has been called.',
+                    'document': document_data
+                },
+                status=status.HTTP_200_OK
+            )
+
+        return Response(
+            {'TokenNotFound': 'Given token was not found or is not valid anymore.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class ProgressReportView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        if DocumentToken.objects.filter(user=request.user, token=request.data.get('token'), called=True).exists():
+            token = DocumentToken.objects.get(token=request.data.get('token'))
+
+            document = token.document
+            document_data = {
+                'id': document.id,
+                'title': document.title,
+                'description': document.description,
+                'template': document.template.url if document.template else None,
+                'document': document.document.url if document.document else None,
+                'signature': document.signature.url if document.signature else None,
+                'pos_x': document.pos_x,
+                'pos_y': document.pos_y,
+                'page_index': document.page_index
+            }
+
+            data = {
+                'document': document_data,
+                'called': token.called,
+                'signed': token.signed
+            }
+
+            if token.signed:
+                token.delete()
+
+            return Response(data)
+
+        return Response(
+                {'TokenNotFound': 'Given token not found or not associated with authenticated user.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class SignDocument(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get_document(self, token):
+        try:
+            document_token = DocumentToken.objects.get(token=token, called=True)
+            return document_token.document
+        except Document.DoesNotExist:
+            raise exceptions.NotFound
+
+    def get_token(self, token):
+        try:
+            document_token = DocumentToken.objects.get(token=token, called=True)
+            return document_token
+        except DocumentToken.DoesNotExist:
+            raise exceptions.NotFound
+
+    def post(self, request, *args, **kwargs):
+        token = request.data.get('token')
+        signature = request.data.get('signature')
+        document = self.get_document(token=token)
+
+        if not signature:
+            raise exceptions.ValidationError({'signature': 'Please provide a valid image file for this field.'})
+
+        signature = signature[22:]
+        signature = base64.b64decode(signature)
+
+        image_path = os.path.join(settings.MEDIA_ROOT, "tmp")
+
+        if not os.path.exists(image_path):
+            os.makedirs(image_path)
+
+        image = open(image_path + "/image.png", "wb")
+        image.write(signature)
+        image.close()
+
+        with open(image_path + "/image.png", "rb") as f:
+            image = File(f)
+
+            if imghdr.what(image) is None:
+                return Response(
+                    {
+                        'error': [
+                            'InvalidSignatureFile',
+                            'Signature seems to be not a valid image file.'
+                        ]
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            if not token and not request.user.is_authenticated:
+                raise exceptions.PermissionDenied
+
+            if token:
+                token_object = self.get_token(token=token)
+                # Check token validitiy here
+                user = token_object.user
+            elif request.user.is_authenticated:
+                user = request.user
+
+            if document.insurance_submission.submitter != user:
+                raise exceptions.PermissionDenied
+
+            document.signature = image
+            document.save()
+
+            insert_signature(document, image)
+
+            document_data = {
+                'id': document.id,
+                'title': document.title,
+                'description': document.description,
+                'template': document.template.url if document.template else None,
+                'document': document.document.url if document.document else None,
+                'signature': document.signature.url if document.signature else None,
+                'pos_x': document.pos_x,
+                'pos_y': document.pos_y,
+                'page_index': document.page_index
+            }
+
+            return Response({
+                'document': document_data
+            })
+
+
+# class AddSubmissionDocument(generics.GenericAPIView):
+#     permission_classes = [permissions.IsAuthenticated]
+
+#     def get_submission(self, pk):
+#         try:
+#             submission = InsuranceSubmission.objects.get(pk=pk)
+#             return submission
+#         except InsuranceSubmission.DoesNotExist:
+#             raise exceptions.NotFound
+
+#     def post(self, request, pk, *args, **kwargs):
+#         # Get the requested submission
+#         submission = self.get_submission(pk=pk)
+
+#         if not submission.submitter == request.user and not request.user.is_staff:
+#             raise exceptions.PermissionDenied
+
+#         if submission.active:
+#             return Response({'error': 'You cannot change agreement files on active contracts.'})
+
+#         if request.data.__contains__('id'):
+#             document = Document.objects.get(pk=request.data.get('id'))
+#             if (request.data.__contains__('document')
+#                 and (type(request.data.get('document')) is InMemoryUploadedFile
+#                      or type(request.data.get('document')) is TemporaryUploadedFile)):
+#                 document.document = request.data.get('document')
+#                 document.save()
+#         else:
+#             return Response('Request must contain document id.', status=status.HTTP_400_BAD_REQUEST)
+
+#         submission.status = 'w'
+#         submission.save()
+
+#         documents = Document.objects.filter(insurance_submission=submission)
+#         serializer = DocumentSerializer(documents, many=True)
+
+#         return Response(
+#             {
+#                 'policy_id': submission.policy_id,
+#                 'documents': None if documents.__len__ == 0 else serializer.data,
+#                 'active': submission.active,
+#                 'denied': submission.denied,
+#             }, status=status.HTTP_200_OK
+#         )
+
+
+class AddPaymentData(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_submission(self, pk):
+        try:
+            submission = InsuranceSubmission.objects.get(pk=pk)
+            return submission
         except InsuranceSubmission.DoesNotExist:
             raise exceptions.NotFound
 
@@ -278,50 +704,94 @@ class AddSubmissionDocument(generics.GenericAPIView):
             raise exceptions.PermissionDenied
 
         if submission.active:
-            return Response({'error': 'You cannot change agreement files on active contracts.'})
+            raise exceptions.ValidationError({'error': 'You cannot change agreement files on active contracts.'})
 
-        if (request.data.__contains__('document_1')
-                and (type(request.data.get('document_1')) is InMemoryUploadedFile
-                     or type(request.data.get('document_1')) is TemporaryUploadedFile)):
-            submission.document_submission_1 = request.data.get('document_1')
-            print(type(request.data.get('document_1')))
+        iban = request.data.get('iban')
+        bic = request.data.get('bic')
 
-        if (request.data.__contains__('document_2')
-                and (type(request.data.get('document_2')) is InMemoryUploadedFile
-                     or type(request.data.get('document_2')) is TemporaryUploadedFile)):
-            submission.document_submission_2 = request.data.get('document_2')
+        if not iban:
+            raise exceptions.ValidationError({'iban': 'This field is required.'})
 
-        if (request.data.__contains__('document_3')
-                and (type(request.data.get('document_3')) is InMemoryUploadedFile
-                     or type(request.data.get('document_3')) is TemporaryUploadedFile)):
-            submission.document_submission_3 = request.data.get('document_3')
+        provider_id = 'ws'
 
-        if (request.data.__contains__('document_4')
-                and (type(request.data.get('document_4')) is InMemoryUploadedFile
-                     or type(request.data.get('document_4')) is TemporaryUploadedFile)):
-            submission.document_submission_4 = request.data.get('document_4')
+        if provider_id == 'ws' and not bic:
+            raise exceptions.ValidationError({'bic': 'This field is required for insurance WS.'})
 
-        if (request.data.__contains__('document_5')
-                and (type(request.data.get('document_5')) is InMemoryUploadedFile
-                     or type(request.data.get('document_5')) is TemporaryUploadedFile)):
-            submission.document_submission_5 = request.data.get('document_5')
+        title = 'Lastschriftverfahren ' + submission.submitter.first_name + ' ' + submission.submitter.last_name
 
-        submission.status = 'w'
-
-        submission.save()
-
-        return Response(
-            {
-                'policy_id': submission.policy_id,
-                'document_1': None if not submission.document_submission_1 else submission.document_submission_1.url,
-                'document_2': None if not submission.document_submission_2 else submission.document_submission_2.url,
-                'document_3': None if not submission.document_submission_3 else submission.document_submission_3.url,
-                'document_4': None if not submission.document_submission_4 else submission.document_submission_4.url,
-                'document_5': None if not submission.document_submission_5 else submission.document_submission_5.url,
-                'active': submission.active,
-                'denied': submission.denied,
-            }, status=status.HTTP_200_OK
+        document = Document.objects.create(
+            title=title,
+            description='SEPA-Lastschriftverfahren',
+            insurance_submission=submission
         )
+
+        user = submission.submitter
+
+        if provider_id:
+            if provider_id == 'vav':
+                # data coordinates in mm
+                vav_co = {
+                    'full_name': [64, 71.5],
+                    'first_name': [64, 120.5],
+                    'last_name': [64, 128.64],
+                    'street': [64, 136.78],
+                    'street_number': [64, 144.92],
+                    'zipcode': [64, 153.06],
+                    'city': [64, 161.2],
+                    'country': [64, 169.34],
+                    'birthdate': [64, 177.48],
+                    'iban': [64, 185.62]
+                }
+
+                coordinates = vav_co
+
+                data = {
+                    'full_name': user.first_name + ' ' + user.last_name,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'street': user.address_1,
+                    'street_number': user.address_1,
+                    'zipcode': user.zipcode,
+                    'city': user.zipcode,
+                    'country': 'Österreich',
+                    'birthdate': str(user.birthdate),
+                    'iban': iban
+                }
+            elif provider_id == 'ws':
+                # data coordinates in mm
+                ws_co = {
+                    'last_name': [25, 168],
+                    'first_name': [102.5, 168],
+                    'address': [25, 183],
+                    'zip_city': [25, 198],
+                    'iban': [34, 222.5],
+                    'bic': [34, 237.5]
+                }
+
+                data = {
+                    'last_name': user.last_name,
+                    'first_name': user.first_name,
+                    'address': user.address_1,
+                    'zip_city': str(user.zipcode) + ' ' + str(user.zipcode),
+                    'iban': iban,
+                    'bic': bic
+                }
+
+                coordinates = ws_co
+        else:
+            raise exceptions.ValidationError({
+                'error': 'Provider id is not able to create payment data sheet. Submission pID: ' + str(provider_id)
+            })
+
+        # Create a file for the Django FileField
+        template = open('static/' + provider_id + '-template.pdf', 'rb')
+        template_djangofile = File(template)
+        document.template.save(title + '.pdf', template_djangofile)
+        template.close()
+
+        insert_payment_data(document, data, coordinates)
+
+        return Response({'success': True})
 
 
 def translate_options():
