@@ -1,12 +1,18 @@
 import json
 import re
 
+from django.http import HttpRequest
+from django.http.response import JsonResponse
 from django.test import TestCase
+from django.views import View
 
 from insurance.insurance_calc import calc_insurance
-from insurance.haushaltsversicherung.haushaltsversicherung_calc import do_calculate
+from insurance.haushaltsversicherung_extra.haushaltsversicherung_calc import do_calculate
 
 from submission.insurancesubmission.models import InsuranceSubmission
+from submission.insurancesubmission.create_insurance_pdf import create_pdf
+
+from user.models import User
 
 
 class CalculationTestCase(TestCase):
@@ -66,3 +72,17 @@ class CalculationTestCase(TestCase):
                                do_calculate,
                                submission_data)
         print(price)
+
+
+class GenerateFile(View):
+    def get(self, request):
+        request = HttpRequest()
+        request.data = {
+            'key': 'household',
+            'geldwerte': 1
+        }
+
+        request.user = User.objects.get(email='contact@aichner-christian.com')
+        submission = InsuranceSubmission.objects.get(pk=25)
+        create_pdf(request, submission)
+        return JsonResponse({'ok': 'ok'})

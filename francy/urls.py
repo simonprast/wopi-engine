@@ -31,6 +31,8 @@ from django.urls import path, include
 from user.models import create_admin_user
 from api import api_views as main_api_views
 
+from insurance.tests import GenerateFile
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -49,6 +51,8 @@ urlpatterns = [
     # - MINOR version when you add functionality in a backwards compatible manner, and
     # - PATCH version when you make backwards compatible bug fixes.
     path('api/v1/', include('api.1.urls')),
+
+    # path('pdftest', GenerateFile.as_view()),
 
     # path('api/v1/', include('user.api.v1.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
