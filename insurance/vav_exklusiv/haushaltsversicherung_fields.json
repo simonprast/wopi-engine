@@ -29,161 +29,161 @@
   },
   {
     "field_name": "staendigbewohnt",
-    "field_title": "Ist das Gebäude mehr als 9 Monate im Jahr bewohnt?",
+    "field_title": "Ist das Gebäude mehr als neun Monate im Jahr bewohnt? (Nicht die Wohnung)",
     "field_type": "integer",
-    "options": [
-      0,
-      1
-    ]
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
   },
   {
     "field_name": "schwimmbecken",
     "field_title": "Soll ein Schwimmbecken mitversichert werden?",
     "field_type": "integer",
     "required": false,
-    "options": [
-      0,
-      1,
-      2
-    ]
+    "options": {
+      "0": "Nein",
+      "1": "Ja, ein Swimmingpool inkl. Rohrsystem, Wasseraustritt und Abdeckung soll nach 1. Risiko für 25.000 Euro versichert werden (Abdeckung nur bis max. 5.000 Euro).",
+      "2": "Ja, ein Swimmingpool inkl. Rohrsystem, Wasseraustritt, Technik und Abdeckung soll nach 1. Risiko für 50.000 Euro versichert werden (Abdeckung und Poolumrandung nur bis max. 25.000 Euro, Planen und Folien nur bis max. 5.000 Euro)."
+    }
   },
   {
     "field_name": "alarmanlage",
-    "field_title": "Alarmanlage beim Gebäude vorhanden?",
+    "field_title": "Ist am zu versichernden Gebäude eine Alarmanlage vorhanden?",
     "field_type": "integer",
     "required": false,
-    "options": [
-      0,
-      1
-    ]
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
   },
   {
     "field_name": "sicherheitstuer",
-    "field_title": "Sicherheitstüre vorhanden?",
+    "field_title": "Ist am zu versichernden Gebäude eine Sicherheitstüre vorhanden?",
     "field_type": "integer",
     "required": false,
-    "options": [
-      0,
-      1
-    ]
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
   },
   {
     "field_name": "selbstbehaltsnachlass",
-    "field_title": "Selbstbehaltsnachlass",
+    "field_title": "Ist bei Schadenseintritt ein Selbstbehalt gewünscht?",
     "field_type": "integer",
     "required": false,
-    "options": [
-      0,
-      1,
-      2,
-      3
-    ]
+    "options": {
+      "0": "Nein, es ist kein Selbstbehalt gewünscht.",
+      "1": "Ja, ein Selbstbehalt von 100 bis 150 Euro ist gewünscht.",
+      "2": "Ja, ein Selbstbehalt von 200 bis 300 Euro ist gewünscht.",
+      "3": "Ja, ein Selbstbehalt von 400 bis 500 Euro ist gewünscht."
+    }
   },
   {
     "field_name": "publicworker",
-    "field_title": "Angestellter des öffentlichen Dienstes?",
+    "field_title": "Ist der Versicherungsnehmer Angestellter des öffentlichen Dienstes?",
     "field_type": "integer",
     "required": false,
-    "options": [
-      0,
-      1
-    ]
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
   },
   {
     "field_name": "vavmehrspartenbonus",
-    "field_title": "Aktive Versicherung bei VAV?",
+    "field_title": "Hat der Versicherungsnehmer aktuell eine aktive Versicherung bei VAV?",
     "field_type": "integer",
     "required": false,
-    "options": [
-      0,
-      1
-    ]
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
   },
   {
     "field_name": "shortterm",
-    "field_title": "Verkürzte 5- oder 3-jährige Laufzeit",
+    "field_title": "Ist eine verkürzte, 5- oder 3-jährige Laufzeit gewünscht?",
     "field_type": "integer",
     "required": false,
-    "options": [
-      0,
-      1,
-      2
-    ]
+    "options": {
+      "0": "Nein, eine 10- oder 9-jährige Laufzeit ist in Ordnung.",
+      "1": "Ja, die Laufzeit soll maximal 5 Jahre betragen.",
+      "2": "Ja, die Laufzeit soll maximal 3 Jahre betragen."
+    }
   },
   {
     "field_name": "extrasecurity",
-    "field_title": "Brandmeldeanlage mit Direktschaltung zur Feuerwehr, ..",
+    "field_title": "Ist eine Brandmeldeanlage mit Direktschaltung zur Feuerwehr vorhanden?",
     "field_type": "integer",
     "required": false,
-    "options": [
-      0,
-      1
-    ]
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
   },
   {
     "field_name": "smarthomesecurity",
-    "field_title": "Smarthome Sicherheitstechnik vorhanden? (Anschluss an Sicherheitszentrale)",
+    "field_title": "Ist Smarthome-Sicherheitstechnik vorhanden? (inkl. Anschluss an Sicherheitszentrale)",
     "field_type": "integer",
     "required": false,
-    "options": [
-      0,
-      1
-    ]
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
   },
   {
     "field_name": "glas",
-    "field_title": "Auf Glasbruch verzichten",
+    "field_title": "Soll auf Glasbruch-Versicherung für Glas innerhalb der Wohnung verzichtet werden? (z.B. Ceranfeld)",
     "field_type": "integer",
     "required": false,
-    "options": [
-      0,
-      1
-    ]
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
   },
   {
     "field_name": "zweitein",
-    "field_title": "Zweitwohnsitz oder Einpersonenhaushalt",
+    "field_title": "Handelt es sich beim Wohnsitz um einen Zweitwohnsitz oder einen Einpersonenhaushalt?",
     "field_type": "integer",
     "required": false,
-    "options": [
-      0,
-      1
-    ]
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
   },
   {
     "field_name": "regionalrabatt",
-    "field_title": "Regionalrabatt",
+    "field_title": "Bundesland des Wohnsitzes (Regionalrabatt)",
     "field_type": "string",
-    "options": [
-      "wien",
-      "niederoesterreich",
-      "steiermark",
-      "burgenland",
-      "oberoesterreich",
-      "kaernten",
-      "salzburg",
-      "tirol",
-      "vorarlberg"
-    ]
+    "options": {
+      "wien": "Wien",
+      "niederoesterreich": "Niederösterreich",
+      "steiermark": "Steiermark",
+      "burgenland": "Burgenland",
+      "oberoesterreich": "Oberösterreich",
+      "kaernten": "Kärnten",
+      "salzburg": "Salzburg",
+      "tirol": "Tirol",
+      "vorarlberg": "Vorarlberg"
+    }
   },
   {
     "field_name": "geldwerte",
-    "field_title": "Geldeswerte, Einlagebücher von 2.500€ auf 4.500€, unversperrt",
+    "field_title": "Maximale Entschädigung für gestohlene, unversperrte (kein Safe) Geldeswerte und Einlagebücher von 2.500 Euro auf 4.500 Euro erhöhen?",
     "field_type": "integer",
     "required": false,
-    "options": [
-      0,
-      1
-    ]
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
   },
   {
     "field_name": "wertgegenstaende",
-    "field_title": "Schmuck, Edelsteine/-metalle, Briefmarken-/Münzsammlungen von 15k€ auf 25k€, unversperrt",
+    "field_title": "Maximale Entschädigung für gestohlenen, unversperrten (kein Safe) Schmuck, Edelsteine/-metalle oder Briefmarken- und Münzsammlungen von 15.000 Euro auf 25.000 Euro erhöhen?",
     "field_type": "integer",
     "required": false,
-    "options": [
-      0,
-      1
-    ]
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
   }
 ]
