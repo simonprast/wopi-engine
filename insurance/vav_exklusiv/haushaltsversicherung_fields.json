@@ -165,5 +165,25 @@
       "tirol",
       "vorarlberg"
     ]
+  },
+  {
+    "field_name": "geldwerte",
+    "field_title": "Geldeswerte, Einlagebücher von 2.500€ auf 4.500€, unversperrt",
+    "field_type": "integer",
+    "required": false,
+    "options": [
+      0,
+      1
+    ]
+  },
+  {
+    "field_name": "wertgegenstaende",
+    "field_title": "Schmuck, Edelsteine/-metalle, Briefmarken-/Münzsammlungen von 15k€ auf 25k€, unversperrt",
+    "field_type": "integer",
+    "required": false,
+    "options": [
+      0,
+      1
+    ]
   }
 ]

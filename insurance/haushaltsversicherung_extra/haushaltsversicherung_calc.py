@@ -49,6 +49,13 @@ def do_calculate(vl, v):
     # Rabatt für Selbstbehaltsanteil
     price = price * c(vl, 'selbstbehaltsnachlass', 1)
 
+    # Zusatzversicherungen #
+    # Geldeswerte, Einlagebücher von 2.500€ auf 4.500€, unversperrt (Ohne Safe)
+    price = price + c(vl, 'geldwerte', 0)
+
+    # Schmuck, Edelsteine/-metalle, Briefmarken-/Münzsammlungen von 15k€ auf 25k€, unversperrt
+    price = price + c(vl, 'wertgegenstaende', 0)
+
     # SPARDA-Bonus, unveränderbar
     price = price * 0.55
     return price, vs

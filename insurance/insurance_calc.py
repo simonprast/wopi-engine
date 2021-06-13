@@ -46,8 +46,6 @@ def calc_insurance(insurance_vars, insurance_fields, insurance_meta, do_calculat
 
         values.update({var_name: var_value})
 
-    # print(values)
-
     price, vs = do_calculate(values, v)
 
     return_dict = meta

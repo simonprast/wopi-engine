@@ -333,7 +333,7 @@ def refresh_token_validity(user=None, document=None, token=None, force=None):
             user = token.user
 
     if force:
-        DocumentToken.objets.filter(user=user).delete()
+        DocumentToken.objects.filter(user=user).delete()
 
     # Initialize variable.
     expired_token = None
@@ -521,8 +521,8 @@ class ProgressReportView(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        if DocumentToken.objects.filter(user=request.user, token=request.data.get('token'), called=True).exists():
-            token = DocumentToken.objects.get(token=request.data.get('token'))
+        if DocumentToken.objects.filter(user=request.user, called=True).exists():
+            token = DocumentToken.objects.get(user=request.user, called=True)
 
             document = token.document
             document_data = {
@@ -608,6 +608,8 @@ class SignDocument(generics.GenericAPIView):
             if not token and not request.user.is_authenticated:
                 raise exceptions.PermissionDenied
 
+            token_object = None
+
             if token:
                 token_object = self.get_token(token=token)
                 # Check token validitiy here
@@ -621,7 +623,11 @@ class SignDocument(generics.GenericAPIView):
             document.signature = image
             document.save()
 
-            insert_signature(document, image)
+            insert_signature(document)
+
+            if token_object:
+                token_object.signed = True
+                token_object.save()
 
             document_data = {
                 'id': document.id,
