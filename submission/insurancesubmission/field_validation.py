@@ -144,7 +144,15 @@ def field_validation(initial_data):
 
             # Check if the field only allows a set of values, and if so, check if the field's value is allowed
             if 'options' in field:
-                if content not in field['options']:
+                # field['options'] can be a dict
+                print(type(field['options']) is dict)
+                if type(field['options']) is dict:
+                    if not str(content) in field['options'].keys():
+                        errors.update(
+                            {f_key: ['The value is not an option for this field. Value: ' + str(content) +
+                                     ', Options: ' + str(list(field['options'].keys()))]})
+
+                elif content not in field['options']:
                     errors.update(
                         {f_key: ['The value is not an option for this field. Value: ' + str(content) +
                                  ', Options: ' + str(field['options'])]})
