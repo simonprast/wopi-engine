@@ -25,21 +25,30 @@ def create_pdf(request, submission):
     pdf.add_page()
 
     pdf.set_font('Helvetica', 'B', 15)
-    pdf.write(h=7, txt='Beratungsprotokoll ' + insurance.insurance_name + ' - ' + full_name)
+    pdf.write(h=7, txt='Beratungsprotokoll - ' + insurance.insurance_name + '\n')
 
     pdf.set_font('Helvetica', '', 12)
 
     for field in fields:
-        pdf.write(h=8, txt=field.get('field_title') + '\n')
-        if field.get('options'):
-            for option in field.get('options'):
-                if option == request.data.get(field.get('field_name')):
-                    pdf.set_font('Helvetica', 'B', 15)
-                pdf.write(h=8, txt=str(option) + " ")
-                pdf.set_font('Helvetica', '', 15)
+        # print(field)
+        # print(field['field_title'])
+        pdf.set_font('Helvetica', 'B', 12)
+        pdf.write(h=8, txt=field['field_title'] + '\n')
+        pdf.set_font('Helvetica', '', 12)
+
+        if field['field_name'] not in request.data:
+            pdf.write(h=8, txt='Keine Angabe')
+
+        elif field.get('options') and type(field.get('options')) is dict:
+            translation = field['options'][str(request.data.get(field['field_name']))]
+            pdf.write(h=8, txt=translation)
+
         else:
-            pdf.write(h=8, txt=str(request.data.get(field.get('field_name'))))
-        pdf.write(h=8, txt='\n')
+            pdf.write(h=8, txt=str(request.data.get(field['field_name'])))
+
+        pdf.write(h=8, txt='\n\n')
+
+        # print('\n')
 
     document = Document.objects.create(
         insurance_submission=submission,
