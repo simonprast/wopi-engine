@@ -30,7 +30,7 @@ def insert_payment_data(document, data, coordinates):
     merge_files(document, pdf)
 
 
-def insert_signature(document, signature):
+def insert_signature(document):
     # Initialize the new PDF file containing custom data.
     pdf = create_pdf()
 
@@ -39,7 +39,15 @@ def insert_signature(document, signature):
     pos_y_mm = pdf.h * document.pos_y
 
     pdf.set_xy(pos_x_mm, pos_y_mm)
-    pdf.image(document.signature.name, w=40)
+
+    print('height:', document.signature.height)
+    print('width:', document.signature.width)
+
+    if document.signature.height > document.signature.width:
+        pdf.image(document.signature.name, h=30)
+    else:
+        pdf.image(document.signature.name, w=40)
+
     # pdf.cell(0, 0, ' ', 0, 0, 'L')
 
     # Merge the files, using the document (+ its template file) and the newly created data PDF.
@@ -89,10 +97,16 @@ def merge_files(document, pdf, index=0):
 
             template_page.mergePage(content_page)
 
-            pdfWriter = PyPDF2.PdfFileWriter()
-            pdfWriter.addPage(template_page)
+            output = PyPDF2.PdfFileWriter()
+
+            for i in range(template.getNumPages()):
+                if i == index:
+                    output.addPage(template_page)
+                else:
+                    page = template.getPage(i)
+                    output.addPage(page)
 
             with open(output_file, 'wb') as final_file:
-                pdfWriter.write(final_file)
+                output.write(final_file)
 
     return output_file
