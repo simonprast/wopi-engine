@@ -52,16 +52,17 @@ def create_pdf(request, submission):
 
     document = Document.objects.create(
         insurance_submission=submission,
-        title=full_name + ".pdf",
+        title='Beratungsprotokoll zur Haushaltsversicherung',
         description=full_name + " " + insurance.insurance_name
     )
 
-    filename = slugify(full_name) + str(document.id) + ".pdf"
+    filename = slugify(full_name) + str(document.id) + '.pdf'
     folder = 'policy/' + str(uuid.uuid4())
+
     path = os.path.join(settings.MEDIA_ROOT, folder)
     os.makedirs(path)
 
-    path = os.path.join(path, filename)
-    pdf.output(path)
-    document.document.name = path
+    full_path = os.path.join(path, filename)
+    pdf.output(full_path)
+    document.template.name = full_path
     document.save()
