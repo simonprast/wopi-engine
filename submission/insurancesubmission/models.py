@@ -61,7 +61,7 @@ class InsuranceSubmission(models.Model):
     )
 
     # This is the status field, which can either be w(aiting), o(pen), or c(losed).
-    status = models.CharField(max_length=1, default='w')
+    status = models.IntegerField(default=0)
 
     submitter = models.ForeignKey(
         User, on_delete=models.SET_NULL, blank=True, null=True

@@ -269,8 +269,9 @@ class AddTemplateDocument(generics.GenericAPIView):
 
         document.save()
 
-        submission.status = 'o'
-        submission.save()
+        if submission.status == 0:
+            submission.status = 1
+            submission.save()
 
         documents = Document.objects.filter(insurance_submission=submission)
         serializer = DocumentSerializer(documents, many=True)
@@ -628,6 +629,16 @@ class SignDocument(generics.GenericAPIView):
             if token_object:
                 token_object.signed = True
                 token_object.save()
+
+            all_signed = True
+
+            for document in Document.objects.filter(insurance_submission=document.insurance_submission):
+                if not document.signed:
+                    all_signed = False
+
+            if all_signed and document.insurance_submission.status == 1:
+                document.insurance_submission.status = 2
+                document.insurance_submission.save()
 
             document_data = {
                 'id': document.id,

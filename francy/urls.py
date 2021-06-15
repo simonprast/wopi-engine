@@ -31,7 +31,7 @@ from django.urls import path, include
 from user.models import create_admin_user
 from api import api_views as main_api_views
 
-from insurance.tests import GenerateFile
+# from insurance.tests import GenerateFile
 
 
 urlpatterns = [
