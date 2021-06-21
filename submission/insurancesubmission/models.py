@@ -110,6 +110,7 @@ class Document(models.Model):
     pos_x = models.FloatField(null=True, blank=True)
     pos_y = models.FloatField(null=True, blank=True)
     page_index = models.IntegerField(null=True, blank=True)
+    payment_document = models.BooleanField(default=False, null=True, blank=True)
 
 
 class DocumentToken(models.Model):

@@ -429,8 +429,15 @@ class RequestSignDocument(generics.GenericAPIView):
             raise exceptions.NotFound
 
     def post(self, request, pk, *args, **kwargs):
-        # The document which should be signed.
-        document = self.get_document(pk=pk)
+        if request.data.get('paymentDocument'):
+            full_name = request.user.first_name + ' ' + request.user.last_name
+
+            document = Document(
+                title='SEPA-Lastschriftmandat ' + full_name
+            )
+        else:
+            # The document which should be signed.
+            document = self.get_document(pk=pk)
 
         # If force is of true value, a new token will be forced even if a called token did already exist.
         force = request.data.get('force')
