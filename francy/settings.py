@@ -19,7 +19,12 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 import os
 
+from dotenv import load_dotenv
 from pathlib import Path
+
+# Load environment variables
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,7 +34,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'n=m_7i!rd)16_tef+pra!01b$d42xrw(itl^wzr6@%vqk5)hup'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -40,9 +45,10 @@ ALLOWED_HOSTS = ['*']
 # Whether users are allowed to create user accounts through the endpoint at /users/create/ or not
 ALLOW_REGISTER = True
 
-ADMIN_USER = 'admin'
-ADMIN_MAIL = 'simon@pra.st'
-ADMIN_PASSWORD = 'admin'
+# Superuser attributes
+ADMIN_USER = os.getenv('ADMIN_USER')
+ADMIN_MAIL = os.getenv('ADMIN_MAIL')
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
 
 # LTS API version
 VERSION = '1.0.0'
@@ -185,10 +191,14 @@ STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# E-mail configuration
+if DEBUG:
+    # Uncomment this line if you intend to bulk-test emails locally.
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    pass
 
-# E-Mail configuration
-EMAIL_HOST = ''
-EMAIL_HOST_USER = ''
-EMAIL_HOST_PASSWORD = ''
+EMAIL_HOST = os.getenv('EMAIL_HOST')
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER

@@ -8,6 +8,9 @@
 # Virtual Environment
 .venv
 
+# Environment variables
+.env
+
 # Database files
 db.sqlite3
 
