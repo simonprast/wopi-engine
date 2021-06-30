@@ -428,13 +428,31 @@ class RequestSignDocument(generics.GenericAPIView):
         except Document.DoesNotExist:
             raise exceptions.NotFound
 
+    def get_user_submission(self, pk, user):
+        try:
+            submission = InsuranceSubmission.objects.get(pk=pk, submitter=user)
+            return submission
+        except InsuranceSubmission.DoesNotExist:
+            raise exceptions.NotFound
+
     def post(self, request, pk, *args, **kwargs):
         if request.data.get('paymentDocument'):
-            full_name = request.user.first_name + ' ' + request.user.last_name
+            submission = self.get_user_submission(pk=pk, user=request.user)
 
-            document = Document(
-                title='SEPA-Lastschriftmandat ' + full_name
-            )
+            if Document.objects.filter(insurance_submission=submission, payment_document=True).exists():
+                document = Document.objects.get(insurance_submission=submission, payment_document=True)
+            else:
+                full_name = request.user.first_name + ' ' + request.user.last_name
+
+                document = Document(
+                    title='SEPA-Lastschriftmandat ' + full_name,
+                    description='Dieses Dokument sollte geloescht werden, sobald es erstellt wurde. \
+                        Bitte wende dich umgehend an den Support, solltest du dieses Dokument sehen.',
+                    insurance_submission=submission,
+                    payment_document=True
+                )
+
+                document.save()
         else:
             # The document which should be signed.
             document = self.get_document(pk=pk)
@@ -620,6 +638,9 @@ class SignDocument(generics.GenericAPIView):
 
             if token:
                 token_object = self.get_token(token=token)
+
+                if token_object.signed:
+                    raise exceptions.ValidationError({'AlreadySigned': 'The token was already used.'})
                 # Check token validitiy here
                 user = token_object.user
             elif request.user.is_authenticated:
@@ -631,7 +652,8 @@ class SignDocument(generics.GenericAPIView):
             document.signature = image
             document.save()
 
-            insert_signature(document)
+            if not document.payment_document:
+                insert_signature(document)
 
             if token_object:
                 token_object.signed = True
@@ -640,7 +662,7 @@ class SignDocument(generics.GenericAPIView):
             all_signed = True
 
             for document in Document.objects.filter(insurance_submission=document.insurance_submission):
-                if not document.signed:
+                if not document.signature:
                     all_signed = False
 
             if all_signed and document.insurance_submission.status == 1:
@@ -713,21 +735,21 @@ class SignDocument(generics.GenericAPIView):
 class AddPaymentData(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_submission(self, pk):
+    def get_document(self, pk):
         try:
-            submission = InsuranceSubmission.objects.get(pk=pk)
-            return submission
-        except InsuranceSubmission.DoesNotExist:
+            document = Document.objects.get(pk=pk, payment_document=True)
+            return document
+        except Document.DoesNotExist:
             raise exceptions.NotFound
 
     def post(self, request, pk, *args, **kwargs):
         # Get the requested submission
-        submission = self.get_submission(pk=pk)
+        document = self.get_document(pk=pk)
 
-        if not submission.submitter == request.user and not request.user.is_staff:
+        if not document.insurance_submission.submitter == request.user and not request.user.is_staff:
             raise exceptions.PermissionDenied
 
-        if submission.active:
+        if document.insurance_submission.active:
             raise exceptions.ValidationError({'error': 'You cannot change agreement files on active contracts.'})
 
         iban = request.data.get('iban')
@@ -741,15 +763,10 @@ class AddPaymentData(generics.GenericAPIView):
         if provider_id == 'ws' and not bic:
             raise exceptions.ValidationError({'bic': 'This field is required for insurance WS.'})
 
-        title = 'Lastschriftverfahren ' + submission.submitter.first_name + ' ' + submission.submitter.last_name
+        title = 'Lastschriftverfahren ' + document.insurance_submission.submitter.first_name + ' ' \
+            + document.insurance_submission.submitter.last_name
 
-        document = Document.objects.create(
-            title=title,
-            description='SEPA-Lastschriftverfahren',
-            insurance_submission=submission
-        )
-
-        user = submission.submitter
+        user = document.insurance_submission.submitter
 
         if provider_id:
             if provider_id == 'vav':
@@ -802,6 +819,9 @@ class AddPaymentData(generics.GenericAPIView):
                 }
 
                 coordinates = ws_co
+
+                document.pos_x = 0.53
+                document.pos_y = 0.86
         else:
             raise exceptions.ValidationError({
                 'error': 'Provider id is not able to create payment data sheet. Submission pID: ' + str(provider_id)
@@ -814,7 +834,6 @@ class AddPaymentData(generics.GenericAPIView):
         template.close()
 
         insert_payment_data(document, data, coordinates)
-
         return Response({'success': True})
 
 

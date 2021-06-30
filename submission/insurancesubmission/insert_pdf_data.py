@@ -27,7 +27,16 @@ def insert_payment_data(document, data, coordinates):
         pdf.cell(0, 0, insert_text, 0, 0, 'L')
 
     # Merge the files, using the document (+ its template file) and the newly created data PDF.
-    merge_files(document, pdf)
+    output_file = merge_files(document, pdf)
+
+    # Create a file for the Django FileField
+    document_file = open(output_file, 'rb')
+    template_djangofile = File(document_file)
+    document.template.save(document.title + '.pdf', template_djangofile)
+    document_file.close()
+
+    # Sign the document
+    insert_signature(document)
 
 
 def insert_signature(document):
@@ -84,6 +93,9 @@ def create_filepaths(document, pdf):
 
 
 def merge_files(document, pdf, index=0):
+    if not index:
+        index = 0
+
     input_file, output_file, pdf_location = create_filepaths(document, pdf)
 
     with open(input_file, 'rb') as template_file:
