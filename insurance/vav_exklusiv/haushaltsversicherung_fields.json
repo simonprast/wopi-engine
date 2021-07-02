@@ -1,7 +1,7 @@
 [
   {
     "field_name": "groesse",
-    "field_title": "Wohnungsgröße in Quadratmeter",
+    "field_title": "Wie groß ist die zu versichernde Wohnung in m²?",
     "field_type": "number"
   },
   {
@@ -17,11 +17,6 @@
     ]
   },
   {
-    "field_name": "alter",
-    "field_title": "Alter des Versicherungsnehmers",
-    "field_type": "number"
-  },
-  {
     "field_name": "vs",
     "field_title": "Individuelle Versicherungssumme",
     "field_type": "number",
@@ -29,7 +24,7 @@
   },
   {
     "field_name": "staendigbewohnt",
-    "field_title": "Ist das Gebäude mehr als neun Monate im Jahr bewohnt? (Nicht die Wohnung)",
+    "field_title": "Ist das Gebäude mehr als neun Monate im Jahr bewohnt?",
     "field_type": "integer",
     "options": {
       "0": "Nein",
@@ -37,19 +32,8 @@
     }
   },
   {
-    "field_name": "schwimmbecken",
-    "field_title": "Soll ein Schwimmbecken mitversichert werden?",
-    "field_type": "integer",
-    "required": false,
-    "options": {
-      "0": "Nein",
-      "1": "Ja, ein Swimmingpool inkl. Rohrsystem, Wasseraustritt und Abdeckung soll nach 1. Risiko für 25.000 Euro versichert werden (Abdeckung nur bis max. 5.000 Euro).",
-      "2": "Ja, ein Swimmingpool inkl. Rohrsystem, Wasseraustritt, Technik und Abdeckung soll nach 1. Risiko für 50.000 Euro versichert werden (Abdeckung und Poolumrandung nur bis max. 25.000 Euro, Planen und Folien nur bis max. 5.000 Euro)."
-    }
-  },
-  {
     "field_name": "alarmanlage",
-    "field_title": "Ist am zu versichernden Gebäude eine Alarmanlage vorhanden?",
+    "field_title": "Ist eine ÖVE-geprüfte Alarmanlage in der Wohnung vorhanden?",
     "field_type": "integer",
     "required": false,
     "options": {
@@ -59,7 +43,7 @@
   },
   {
     "field_name": "sicherheitstuer",
-    "field_title": "Ist am zu versichernden Gebäude eine Sicherheitstüre vorhanden?",
+    "field_title": "Ist die Tür der zu versichernden Wohnung eine geprüfte Sicherheitstür?",
     "field_type": "integer",
     "required": false,
     "options": {
@@ -80,26 +64,6 @@
     }
   },
   {
-    "field_name": "publicworker",
-    "field_title": "Ist der Versicherungsnehmer Angestellter des öffentlichen Dienstes?",
-    "field_type": "integer",
-    "required": false,
-    "options": {
-      "0": "Nein",
-      "1": "Ja"
-    }
-  },
-  {
-    "field_name": "vavmehrspartenbonus",
-    "field_title": "Hat der Versicherungsnehmer aktuell eine aktive Versicherung bei VAV?",
-    "field_type": "integer",
-    "required": false,
-    "options": {
-      "0": "Nein",
-      "1": "Ja"
-    }
-  },
-  {
     "field_name": "shortterm",
     "field_title": "Ist eine verkürzte, 5- oder 3-jährige Laufzeit gewünscht?",
     "field_type": "integer",
@@ -111,28 +75,8 @@
     }
   },
   {
-    "field_name": "extrasecurity",
-    "field_title": "Ist eine Brandmeldeanlage mit Direktschaltung zur Feuerwehr vorhanden?",
-    "field_type": "integer",
-    "required": false,
-    "options": {
-      "0": "Nein",
-      "1": "Ja"
-    }
-  },
-  {
-    "field_name": "smarthomesecurity",
-    "field_title": "Ist Smarthome-Sicherheitstechnik vorhanden? (inkl. Anschluss an Sicherheitszentrale)",
-    "field_type": "integer",
-    "required": false,
-    "options": {
-      "0": "Nein",
-      "1": "Ja"
-    }
-  },
-  {
     "field_name": "glas",
-    "field_title": "Soll auf Glasbruch-Versicherung für Glas innerhalb der Wohnung verzichtet werden? (z.B. Ceranfeld)",
+    "field_title": "Soll auf Glasbruch-Versicherung für Glas außerhalb der Wohnung verzichtet werden? (z.B. Terrassenverglasung, Eingangsbereich)",
     "field_type": "integer",
     "required": false,
     "options": {
@@ -141,13 +85,24 @@
     }
   },
   {
-    "field_name": "zweitein",
-    "field_title": "Handelt es sich beim Wohnsitz um einen Zweitwohnsitz oder einen Einpersonenhaushalt?",
+    "field_name": "zweitwohnsitz",
+    "field_title": "Handelt es sich beim Wohnsitz um einen Zweitwohnsitz?",
     "field_type": "integer",
     "required": false,
     "options": {
       "0": "Nein",
       "1": "Ja"
+    }
+  },
+  {
+    "field_name": "wohntyp",
+    "field_title": "Was ist die aktuelle Wohnsituation des Versicherungsnehmers?",
+    "field_type": "integer",
+    "required": false,
+    "options": {
+      "0": "Single-/Einpersonenhaushalt",
+      "1": "In Wohngemeinschaft",
+      "2": "Mit Partner oder Familie"
     }
   },
   {
@@ -185,5 +140,10 @@
       "0": "Nein",
       "1": "Ja"
     }
+  },
+  {
+    "field_name": "alter",
+    "field_title": "Wie alt ist der Versicherungsnehmer?",
+    "field_type": "number"
   }
 ]
