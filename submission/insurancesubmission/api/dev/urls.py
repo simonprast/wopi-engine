@@ -29,10 +29,7 @@ urlpatterns = [
     path('sign/document/signature/', api_views.SignDocument.as_view()),
 
     # POST - Add payment data to a payment document (customer)
-    path('sign/document/<int:pk>/paymentdata/', api_views.AddPaymentData.as_view()),
-
-    # POST - Create a Document (SEPA-Lastschrift) containing payment data (customer)
-    path('submit/<int:pk>/payment/', api_views.AddPaymentData.as_view()),
+    path('sign/document/<int:pk>/payment/', api_views.AddPaymentData.as_view()),
 
     # POST - add blank template agreement/contract documents (admin)
     path('submit/<int:pk>/template/', api_views.AddTemplateDocument.as_view()),
