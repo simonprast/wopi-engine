@@ -5,24 +5,6 @@
     "field_type": "number"
   },
   {
-    "field_name": "hhv_zonenfaktor",
-    "field_title": "Hochwasserzone",
-    "field_type": "integer",
-    "options": [
-      1,
-      2,
-      3,
-      4,
-      5
-    ]
-  },
-  {
-    "field_name": "vs",
-    "field_title": "Individuelle Versicherungssumme",
-    "field_type": "number",
-    "required": false
-  },
-  {
     "field_name": "staendigbewohnt",
     "field_title": "Ist das Gebäude mehr als neun Monate im Jahr bewohnt?",
     "field_type": "integer",
@@ -145,5 +127,23 @@
     "field_name": "alter",
     "field_title": "Wie alt ist der Versicherungsnehmer?",
     "field_type": "number"
+  },
+  {
+    "field_name": "vs",
+    "field_title": "Individuelle Versicherungssumme",
+    "field_type": "number",
+    "required": false
+  },
+  {
+    "field_name": "hhv_zonenfaktor",
+    "field_title": "Hochwasserzone",
+    "field_type": "integer",
+    "options": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
   }
 ]
