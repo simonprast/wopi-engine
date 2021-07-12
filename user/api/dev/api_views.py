@@ -215,6 +215,10 @@ class UserDetail(mixins.RetrieveModelMixin,
             if altered_request_data.__contains__('last_login'):
                 altered_request_data.pop('last_login')
 
+            # Phone number shall be added externally
+            if altered_request_data.__contains__('phone'):
+                altered_request_data.pop('phone')
+
             # utype can only be altered by administrative accounts.
             if altered_request_data.__contains__('utype') and not request.user.is_staff:
                 altered_request_data.pop('utype')
@@ -256,6 +260,11 @@ class UserDetail(mixins.RetrieveModelMixin,
             return Response(serializer_data)
         else:
             raise exceptions.PermissionDenied
+
+
+class AddPhoneNumber(generics.GenericAPIView):
+    def post(self, request):
+        return Response({'ok': 'ok'})
 
 
 def create_basic_user_dict(user):
