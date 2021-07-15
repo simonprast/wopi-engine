@@ -290,7 +290,7 @@ class AddPhoneNumber(generics.GenericAPIView):
             send_code(formatted_number, channel)
             return Response({'ok': 'ok'})
         else:
-            raise exceptions.ValidationError('Field \'phone_number\' is required.')
+            raise exceptions.ValidationError({'phone_number': 'This field is required.'})
 
 
 class VerifyPhoneNumber(generics.GenericAPIView):
@@ -304,10 +304,10 @@ class VerifyPhoneNumber(generics.GenericAPIView):
                 user.phone_verified = True
                 user.save()
             else:
-                raise exceptions.ValidationError('Verification code is wrong.')
+                raise exceptions.ValidationError({'error': 'Invalid verification code.'})
             return Response({'ok': 'ok'})
         else:
-            raise exceptions.ValidationError('Field \'code\' is required.')
+            raise exceptions.ValidationError({'error': 'Field \'code\' is required.'})
 
 
 def create_basic_user_dict(user):
