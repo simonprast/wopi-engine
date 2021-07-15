@@ -14,7 +14,7 @@ from django.core.validators import validate_email
 from rest_framework import serializers, status
 
 from .authentication import obtain_auth_token
-from .models import User, check_phone_number
+from .models import User
 
 
 def create_or_login(regSerializer, logSerializer, request, validated=False):
@@ -72,7 +72,7 @@ def create_or_login(regSerializer, logSerializer, request, validated=False):
 
 
 def validated_user_data(initial_data, change=False):
-    first_name, last_name, email, phone, password = None, None, None, None, None
+    first_name, last_name, email, password = None, None, None, None
 
     # Dict of field errors
     errors = {}
@@ -139,14 +139,6 @@ def validated_user_data(initial_data, change=False):
             errors.update(
                 {'email': ['This field is required.']})
 
-    if 'phone' in initial_data:
-        phone_number = check_phone_number(initial_data['phone'])
-        if not phone_number:
-            errors.update(
-                {'phone': ['Invalid number.']})
-        else:
-            phone = phone_number
-
     if 'password' in initial_data:
         password_to_validate = initial_data['password']
         try:
@@ -169,4 +161,4 @@ def validated_user_data(initial_data, change=False):
     if errors:
         raise serializers.ValidationError(errors)
 
-    return first_name, last_name, email, phone, password
+    return first_name, last_name, email, password

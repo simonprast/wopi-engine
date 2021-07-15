@@ -20,14 +20,15 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class UserDetailSerializer(serializers.Serializer):
-    first_name, last_name, email, phone, password = None, None, None, None, None
-    address_1 = serializers.CharField(required=False)
-    address_2 = serializers.CharField(required=False)
+    first_name, last_name, email, password = None, None, None, None
+    street = serializers.CharField(required=False)
+    street_number = serializers.CharField(required=False)
     zipcode = serializers.CharField(required=False)
+    city = serializers.CharField(required=False)
 
     def validate(self, value):
         # Ensure that the given user arguments are valid and set the values accordingly
-        self.first_name, self.last_name, self.email, self.phone, self.password = validated_user_data(
+        self.first_name, self.last_name, self.email, self.password = validated_user_data(
             self.initial_data)
         return value
 
@@ -36,15 +37,15 @@ class UserDetailSerializer(serializers.Serializer):
             first_name=self.first_name,
             last_name=self.last_name,
             email=self.email,
-            phone=self.phone,
             password=self.password,
             serializers=serializers
         )
 
         if user:
-            user.address_1 = self.validated_data.get('address_1')
-            user.address_2 = self.validated_data.get('address_2')
+            user.street = self.validated_data.get('street')
+            user.street_number = self.validated_data.get('street_number')
             user.zipcode = self.validated_data.get('zipcode')
+            user.city = self.validated_data.get('city')
             user.save()
 
         return True if user else False
@@ -62,10 +63,10 @@ class ChangeUserSerializer(serializers.ModelSerializer):
     sex = serializers.CharField(required=False)
     birthdate = serializers.DateField(required=False)
     email = serializers.CharField(required=False)
-    phone = serializers.CharField(required=False)
-    address_1 = serializers.CharField(required=False)
-    address_2 = serializers.CharField(required=False)
+    street = serializers.CharField(required=False)
+    street_number = serializers.CharField(required=False)
     zipcode = serializers.CharField(required=False)
+    city = serializers.CharField(required=False)
 
     def validate(self, value):
         # If the request method is PUT it must be stated that the object
@@ -73,7 +74,7 @@ class ChangeUserSerializer(serializers.ModelSerializer):
         change = True if self.context.get('request').method == 'PUT' else False
 
         # Ensure that the given user arguments are valid and set the values accordingly
-        self.first_name, self.last_name, self.email, self.phone, self.password = validated_user_data(
+        self.first_name, self.last_name, self.email, self.password = validated_user_data(
             self.initial_data, change=change)
 
         self.sex = self.initial_data['sex'] if 'sex' in self.initial_data else None
@@ -87,12 +88,12 @@ class ChangeUserSerializer(serializers.ModelSerializer):
         instance.birthdate = self.birthdate or instance.birthdate
         old_email = instance.email
         instance.email = self.email or instance.email
-        instance.phone = self.phone or instance.phone
-        instance.address_1 = validated_data.get(
-            'address_1') or instance.address_1
-        instance.address_2 = validated_data.get(
-            'address_2') or instance.address_2
+        instance.street = validated_data.get(
+            'street') or instance.street
+        instance.street_number = validated_data.get(
+            'street_number') or instance.street_number
         instance.zipcode = validated_data.get('zipcode') or instance.zipcode
+        instance.city = validated_data.get('city') or instance.city
 
         new_password = False
         if self.password and not instance.check_password(self.password):
