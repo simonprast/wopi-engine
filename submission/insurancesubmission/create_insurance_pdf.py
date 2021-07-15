@@ -53,7 +53,9 @@ def create_pdf(request, submission):
     document = Document.objects.create(
         insurance_submission=submission,
         title='Beratungsprotokoll zur Haushaltsversicherung',
-        description=full_name + " " + insurance.insurance_name
+        description=full_name + " " + insurance.insurance_name,
+        pos_x=0.7,
+        pos_y=0.9
     )
 
     filename = slugify(full_name) + str(document.id) + '.pdf'
@@ -64,5 +66,10 @@ def create_pdf(request, submission):
 
     full_path = os.path.join(path, filename)
     pdf.output(full_path)
-    document.template.name = full_path
+    document.template.name = folder + '/' + filename
+
+    # Count pages of a PDF file
+    pages = pdf.page_no()
+    document.page_index = pages - 1
+
     document.save()

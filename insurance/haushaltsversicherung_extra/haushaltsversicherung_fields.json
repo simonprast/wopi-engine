@@ -70,5 +70,15 @@
       200,
       400
     ]
+  },
+  {
+    "field_name": "zweitein",
+    "field_title": "Zweitwohnsitz oder Einpersonenhaushalt",
+    "field_type": "integer",
+    "required": false,
+    "options": [
+      0,
+      1
+    ]
   }
 ]

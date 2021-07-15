@@ -143,11 +143,13 @@ class User(AbstractBaseUser):
 
     # Contact info
     phone = models.CharField(max_length=255, null=True, blank=True)
+    phone_verified = models.BooleanField(default=False)
 
     # Address
-    address_1 = models.CharField(max_length=255, null=True, blank=False)
-    address_2 = models.CharField(max_length=255, null=True, blank=False)
+    street = models.CharField(max_length=255, null=True, blank=False)
+    street_number = models.CharField(max_length=255, null=True, blank=False)
     zipcode = models.CharField(max_length=255, null=True, blank=False)
+    city = models.CharField(max_length=255, null=True, blank=False)
 
     # ID verification
     verified = models.BooleanField(default=False)

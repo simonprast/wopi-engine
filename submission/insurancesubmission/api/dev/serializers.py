@@ -26,8 +26,8 @@ def create_data(initial_data):
     meta_data = {}
     field_data = []
 
-    if 'provider_id' in initial_data:
-        meta_data.update({'provider_id': initial_data['provider_id']})
+    if 'policy_id' in initial_data:
+        meta_data.update({'provider_id': initial_data['policy_id']})
 
     data.append(meta_data)
 

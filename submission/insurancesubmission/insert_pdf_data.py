@@ -11,6 +11,8 @@ def insert_payment_data(document, data, coordinates):
     # Initialize the new PDF file containing custom data.
     pdf = create_pdf()
 
+    pdf.set_font('Courier', '', 12.2)
+
     # Place the Text at the PDF file.
     for item in data:
         pdf.set_xy(coordinates[item][0], coordinates[item][1])

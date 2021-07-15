@@ -22,6 +22,12 @@ urlpatterns = [
     # PUT - change a specific user's data (customer - if the requested user is the customer itself)
     path('<uuid:pk>/', api_views.UserDetail.as_view()),
 
+    # POST - Add a new phone number to the user
+    path('phone/add/', api_views.AddPhoneNumber.as_view()),
+
+    # POST - Verify a phone number for a user
+    path('phone/verify/', api_views.VerifyPhoneNumber.as_view()),
+
     # POST - create a new user or authenticate an existing user
     path('create/', api_views.UserCreateOrLogin.as_view()),
 

@@ -89,7 +89,8 @@ class UserAdmin(BaseUserAdmin):
                     "last_name",
                     "sex",
                     "birthdate",
-                    "phone"
+                    "phone",
+                    "phone_verified"
                 )
             }
         ),

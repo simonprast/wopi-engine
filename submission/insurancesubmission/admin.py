@@ -44,7 +44,22 @@ class InsuranceSubmissionAdmin(admin.ModelAdmin):
                     "policy_document",
                     "active",
                     "denied",
-                    "policy_id"
+                    "policy_id",
+                )
+            }
+        ),
+        (
+            "Payment Information", {
+                "classes": ("wide",),
+                "fields": (
+                    "first_name",
+                    "last_name",
+                    "street",
+                    "street_number",
+                    "zipcode",
+                    "city",
+                    "iban_ending",
+                    "bic_code"
                 )
             }
         ),

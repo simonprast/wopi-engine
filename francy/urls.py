@@ -55,7 +55,8 @@ urlpatterns = [
     # path('pdftest', GenerateFile.as_view()),
 
     # path('api/v1/', include('user.api.v1.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) \
+  + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
 try:
     create_admin_user()

@@ -5,9 +5,10 @@
 #
 
 import base64
-import json
 import imghdr
+import json
 import os
+import re
 
 from datetime import datetime, timezone
 
@@ -125,12 +126,22 @@ class GetInsuranceSubmissions(generics.GenericAPIView):
         for submission in submissions:
             documents = Document.objects.filter(insurance_submission=submission)
             serializer = DocumentSerializer(documents, many=True)
+
             submission_obj = {
                 'id': submission.id,
                 'insurance': str(submission.insurance),
                 'date': str(submission.datetime),
                 'policy_id': submission.policy_id,
                 'submitter': str(submission.submitter),
+                'payment_data': {
+                    'first_name': submission.first_name or None,
+                    'last_name': submission.last_name or None,
+                    'street': submission.street or None,
+                    'street_number': submission.street_number or None,
+                    'zipcode': submission.zipcode or None,
+                    'city': submission.city or None
+                },
+                'logo_link': '/static/' + str(submission.provider_id) + '.jpg',
                 'status': {
                     'active': submission.active,
                     'denied': submission.denied,
@@ -194,6 +205,7 @@ class ChangeInsuranceSubmissionDetails(generics.GenericAPIView):
                      or type(request.data.get('document')) is TemporaryUploadedFile)):
             submission.policy_document = request.data.get('document')
             submission.active = True
+            submission.status = 3
 
         submission.save()
 
@@ -344,13 +356,19 @@ def refresh_token_validity(user=None, document=None, token=None, force=None):
 
         # If there exists more than one token for a user, one of them must be expired.
         if tokens.count() > 1:
-            expired_token = tokens.get(expired=True)
-            ex_time_alive = (datetime.now(timezone.utc) - expired_token.created_at).total_seconds()
+            # There can be multiple tokens for multiple documents, which crashes something.
+            # Handle this by checking if either two expired or two non-expired tokens exist.
+            if tokens.filter(expired=True).count() > 1 or tokens.filter(expired=False).count() > 1:
+                tokens.delete()
+                token = DocumentToken.objects.create(user=user, document=document)
+            else:
+                expired_token = tokens.get(expired=True)
+                ex_time_alive = (datetime.now(timezone.utc) - expired_token.created_at).total_seconds()
 
-            # Delete the expired token in case it has been alive for more than 70 seconds.
-            if ex_time_alive >= 70:
-                expired_token.delete()
-                expired_token = None
+                # Delete the expired token in case it has been alive for more than 70 seconds.
+                if ex_time_alive >= 70:
+                    expired_token.delete()
+                    expired_token = None
 
         # Get the currently active token, ...
         token = tokens.get(expired=False)
@@ -410,7 +428,10 @@ def refresh_token_validity(user=None, document=None, token=None, force=None):
     # If the active token is alive for more than 70 seconds, it isn't valid anymore.
     # A new one must be created and used.
     else:
-        token.delete()
+        try:
+            token.delete()
+        except Exception:
+            pass
         token = None
         token = DocumentToken.objects.create(user=user, document=document)
         time_left = 60
@@ -426,17 +447,17 @@ class RequestSignDocument(generics.GenericAPIView):
             document = Document.objects.get(pk=pk)
             return document
         except Document.DoesNotExist:
-            raise exceptions.NotFound
+            raise exceptions.ValidationError({'error': 'Document does not exist.'})
 
     def get_user_submission(self, pk, user):
         try:
             submission = InsuranceSubmission.objects.get(pk=pk, submitter=user)
             return submission
         except InsuranceSubmission.DoesNotExist:
-            raise exceptions.NotFound
+            raise exceptions.ValidationError({'error': 'Submission does not exist.'})
 
     def post(self, request, pk, *args, **kwargs):
-        if request.data.get('paymentDocument'):
+        if request.data.get('payment_document'):
             submission = self.get_user_submission(pk=pk, user=request.user)
 
             if Document.objects.filter(insurance_submission=submission, payment_document=True).exists():
@@ -583,24 +604,18 @@ class ProgressReportView(generics.GenericAPIView):
 class SignDocument(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
 
-    def get_document(self, token):
-        try:
-            document_token = DocumentToken.objects.get(token=token, called=True)
-            return document_token.document
-        except Document.DoesNotExist:
-            raise exceptions.NotFound
-
     def get_token(self, token):
         try:
             document_token = DocumentToken.objects.get(token=token, called=True)
             return document_token
         except DocumentToken.DoesNotExist:
-            raise exceptions.NotFound
+            raise exceptions.ValidationError({'token': 'Token object with given token not found.'})
 
     def post(self, request, *args, **kwargs):
         token = request.data.get('token')
         signature = request.data.get('signature')
-        document = self.get_document(token=token)
+        token_object = self.get_token(token=token)
+        document = token_object.document
 
         if not signature:
             raise exceptions.ValidationError({'signature': 'Please provide a valid image file for this field.'})
@@ -662,7 +677,11 @@ class SignDocument(generics.GenericAPIView):
             all_signed = True
 
             for document in Document.objects.filter(insurance_submission=document.insurance_submission):
+                print('test')
+                print(document)
+                print(document.signature)
                 if not document.signature:
+                    print('test')
                     all_signed = False
 
             if all_signed and document.insurance_submission.status == 1:
@@ -755,10 +774,54 @@ class AddPaymentData(generics.GenericAPIView):
         iban = request.data.get('iban')
         bic = request.data.get('bic')
 
+        first_name = request.data.get('first_name')
+        last_name = request.data.get('last_name')
+        full_name = first_name + ' ' + last_name
+        street = request.data.get('street')
+        street_number = request.data.get('street_number')
+        full_address = street + ' ' + street_number
+        zipcode = request.data.get('zipcode')
+        city = request.data.get('city')
+        full_city = zipcode + ' ' + city
+        country = 'Österreich'
+        birthdate = request.data.get('birthdate')
+
+        set_as_main_address = request.data.get('set_as_main_address')
+
+        if set_as_main_address:
+            user = request.user
+            user.street = street
+            user.street_number = street_number
+            user.zipcode = zipcode
+            user.city = city
+            user.save()
+
         if not iban:
             raise exceptions.ValidationError({'iban': 'This field is required.'})
 
-        provider_id = 'ws'
+        submission = document.insurance_submission
+        submission.iban_ending = iban[-4:]
+        submission.bic = bic
+        submission.first_name = first_name
+        submission.last_name = last_name
+        submission.street = street
+        submission.street_number = street_number
+        submission.zipcode = zipcode
+        submission.city = city
+        submission.save()
+
+        # Convert string python dict to valid JSON
+        p = re.compile('(?<!\\\\)\'')
+        json_string = p.sub('\"', document.insurance_submission.data)
+        json_data = json.loads(json_string)
+
+        provider_id = json_data[0]['provider_id']
+
+        if provider_id not in ['household_vav_exklusiv', 'household_wien_extra']:
+            raise exceptions.ValidationError({'error': 'Provider id not supported.'})
+        else:
+            submission.provider_id = provider_id
+            submission.save()
 
         if provider_id == 'ws' and not bic:
             raise exceptions.ValidationError({'bic': 'This field is required for insurance WS.'})
@@ -766,10 +829,13 @@ class AddPaymentData(generics.GenericAPIView):
         title = 'Lastschriftverfahren ' + document.insurance_submission.submitter.first_name + ' ' \
             + document.insurance_submission.submitter.last_name
 
-        user = document.insurance_submission.submitter
+        # user = document.insurance_submission.submitter
+
+        # get the current date
+        date = datetime.now().strftime('%d.%m.%Y')
 
         if provider_id:
-            if provider_id == 'vav':
+            if provider_id == 'household_vav_exklusiv':
                 # data coordinates in mm
                 vav_co = {
                     'full_name': [64, 71.5],
@@ -781,24 +847,29 @@ class AddPaymentData(generics.GenericAPIView):
                     'city': [64, 161.2],
                     'country': [64, 169.34],
                     'birthdate': [64, 177.48],
-                    'iban': [64, 185.62]
+                    'iban': [64, 185.62],
+                    'date': [64, 267.4]
                 }
 
                 coordinates = vav_co
 
                 data = {
-                    'full_name': user.first_name + ' ' + user.last_name,
-                    'first_name': user.first_name,
-                    'last_name': user.last_name,
-                    'street': user.address_1,
-                    'street_number': user.address_1,
-                    'zipcode': user.zipcode,
-                    'city': user.zipcode,
-                    'country': 'Österreich',
-                    'birthdate': str(user.birthdate),
-                    'iban': iban
+                    'full_name': full_name,
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'street': street,
+                    'street_number': street_number,
+                    'zipcode': zipcode,
+                    'city': city,
+                    'country': country,
+                    'birthdate': str(birthdate),
+                    'iban': iban,
+                    'date': date
                 }
-            elif provider_id == 'ws':
+
+                document.pos_x = 0.59
+                document.pos_y = 0.83
+            elif provider_id == 'household_wien_extra':
                 # data coordinates in mm
                 ws_co = {
                     'last_name': [25, 168],
@@ -806,16 +877,18 @@ class AddPaymentData(generics.GenericAPIView):
                     'address': [25, 183],
                     'zip_city': [25, 198],
                     'iban': [34, 222.5],
-                    'bic': [34, 237.5]
+                    'bic': [34, 237.5],
+                    'date': [64, 267.4]
                 }
 
                 data = {
-                    'last_name': user.last_name,
-                    'first_name': user.first_name,
-                    'address': user.address_1,
-                    'zip_city': str(user.zipcode) + ' ' + str(user.zipcode),
+                    'last_name': last_name,
+                    'first_name': first_name,
+                    'address': full_address,
+                    'zip_city': full_city,
                     'iban': iban,
-                    'bic': bic
+                    'bic': bic,
+                    'date': date
                 }
 
                 coordinates = ws_co

@@ -23,7 +23,8 @@ from submission.insurancesubmission.api.dev.serializers import DocumentSerialize
 from user.authentication import refresh_token, remove_token
 
 from user.create_or_login import create_or_login, validated_user_data
-from user.models import ResetPasswordToken, User, VerifyEmailToken
+from user.models import check_phone_number, ResetPasswordToken, User, VerifyEmailToken
+from user.twilio_verify import send_code, verify_code
 
 from .serializers import ChangeUserSerializer, LoginUserSerializer, UserSerializer, UserDetailSerializer
 
@@ -215,9 +216,10 @@ class UserDetail(mixins.RetrieveModelMixin,
             if altered_request_data.__contains__('last_login'):
                 altered_request_data.pop('last_login')
 
-            # Phone number shall be added externally
-            if altered_request_data.__contains__('phone'):
-                altered_request_data.pop('phone')
+            if not request.user.is_staff:
+                # Phone number shall be added externally
+                if altered_request_data.__contains__('phone'):
+                    altered_request_data.pop('phone')
 
             # utype can only be altered by administrative accounts.
             if altered_request_data.__contains__('utype') and not request.user.is_staff:
@@ -263,8 +265,43 @@ class UserDetail(mixins.RetrieveModelMixin,
 
 
 class AddPhoneNumber(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request):
-        return Response({'ok': 'ok'})
+        if request.data.get('phone_number'):
+            formatted_number = check_phone_number(request.data.get('phone_number'))
+            print(request.data.get('phone_number'))
+
+            if User.objects.filter(phone=formatted_number, phone_verified=True).exists():
+                return Response({'phone_number_already_exists': 'User with this phone number already exists.'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            user = request.user
+            print(user.email)
+            user.phone = formatted_number
+            user.phone_verified = False
+            user.save()
+            send_code(formatted_number)
+            return Response({'ok': 'ok'})
+        else:
+            raise exceptions.ValidationError('Field \'phone_number\' is required.')
+
+
+class VerifyPhoneNumber(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        if request.data.get('code'):
+            status = verify_code(request.user.phone, request.data.get('code'))
+            if status == 'approved':
+                user = request.user
+                user.phone_verified = True
+                user.save()
+            else:
+                raise exceptions.ValidationError('Verification code is wrong.')
+            return Response({'ok': 'ok'})
+        else:
+            raise exceptions.ValidationError('Field \'code\' is required.')
 
 
 def create_basic_user_dict(user):
@@ -363,9 +400,10 @@ def create_user_dict(user):
         'sex': user.sex,
         'birthdate': user.birthdate,
         'phone': user.phone,
-        'address1': user.address_1,
-        'address2': user.address_2,
+        'street': user.street,
+        'street_number': user.street_number,
         'zipcode': user.zipcode,
+        'city': user.city,
         'utype': user.utype,
         'verified': user.verified
     }
@@ -441,6 +479,15 @@ def create_user_dict(user):
                 'date': str(submission.datetime),
                 'policy_id': submission.policy_id,
                 'submitter': str(submission.submitter),
+                'payment_data': {
+                    'first_name': submission.first_name or None,
+                    'last_name': submission.last_name or None,
+                    'street': submission.street or None,
+                    'street_number': submission.street_number or None,
+                    'zipcode': submission.zipcode or None,
+                    'city': submission.city or None
+                },
+                'logo_link': '/static/' + str(submission.provider_id) + '.jpg',
                 'status': {
                     'active': submission.active,
                     'denied': submission.denied,
@@ -690,7 +737,7 @@ class RequestPasswordReset(generics.GenericAPIView):
         mail_context = {
             'user': user,
             'token': reset_password_token.token,
-            'email': urllib.parse.quote_plus(request.user.email)
+            'email': urllib.parse.quote_plus(email)
         }
 
         mail_message = EmailMessage(

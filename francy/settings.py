@@ -22,6 +22,8 @@ import os
 from dotenv import load_dotenv
 from pathlib import Path
 
+from twilio.rest import Client
+
 # Load environment variables
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
@@ -187,9 +189,20 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, '/static/')
+
+STATICFILES_DIRS = (
+    os.path.join('static'),
+)
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Get Twilio data from environment variables
+TWILIO_SID = os.getenv('TWILIO_SID')
+TWILIO_AUTH_TOKEN = os.getenv('TWILIO_AUTH_TOKEN')
+TWILIO_SERVICE_ID = os.getenv('TWILIO_SERVICE_ID')
+TWILIO_CLIENT = Client(TWILIO_SID, TWILIO_AUTH_TOKEN)
 
 # E-mail configuration
 if DEBUG:

@@ -72,6 +72,19 @@ class InsuranceSubmission(models.Model):
     # This field sets a custom policy number/identification code
     policy_id = models.CharField(max_length=64, blank=True, null=True)
 
+    # household_wien_extra or household_vav_exklusiv
+    provider_id = models.CharField(max_length=64, blank=True, null=True)
+
+    iban_ending = models.CharField(max_length=4, blank=True, null=True)
+    bic_code = models.CharField(max_length=11, blank=True, null=True)
+
+    first_name = models.CharField(max_length=255, blank=True, null=True)
+    last_name = models.CharField(max_length=255, blank=True, null=True)
+    street = models.CharField(max_length=255, blank=True, null=True)
+    street_number = models.CharField(max_length=255, blank=True, null=True)
+    zipcode = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=255, blank=True, null=True)
+
     # Data contains the submission data which each field represented through a
     # dictionary with the keys 'field_name', 'field_title' and 'field_content'.
     data = models.TextField()
