@@ -1,0 +1,149 @@
+[
+  {
+    "field_name": "groesse",
+    "field_title": "Wie groß ist die zu versichernde Wohnung in m²?",
+    "field_type": "number"
+  },
+  {
+    "field_name": "staendigbewohnt",
+    "field_title": "Ist das Gebäude mehr als neun Monate im Jahr bewohnt?",
+    "field_type": "integer",
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
+  },
+  {
+    "field_name": "alarmanlage",
+    "field_title": "Ist eine ÖVE-geprüfte Alarmanlage in der Wohnung vorhanden?",
+    "field_type": "integer",
+    "required": false,
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
+  },
+  {
+    "field_name": "sicherheitstuer",
+    "field_title": "Ist die Tür der zu versichernden Wohnung eine geprüfte Sicherheitstür?",
+    "field_type": "integer",
+    "required": false,
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
+  },
+  {
+    "field_name": "selbstbehaltsnachlass",
+    "field_title": "Ist bei Schadenseintritt ein Selbstbehalt gewünscht?",
+    "field_type": "integer",
+    "required": false,
+    "options": {
+      "0": "Nein, es ist kein Selbstbehalt gewünscht.",
+      "1": "Ja, ein Selbstbehalt von 100 bis 150 Euro ist gewünscht.",
+      "2": "Ja, ein Selbstbehalt von 200 bis 300 Euro ist gewünscht.",
+      "3": "Ja, ein Selbstbehalt von 400 bis 500 Euro ist gewünscht."
+    }
+  },
+  {
+    "field_name": "shortterm",
+    "field_title": "Ist eine verkürzte, 5- oder 3-jährige Laufzeit gewünscht?",
+    "field_type": "integer",
+    "required": false,
+    "options": {
+      "0": "Nein, eine 10- oder 9-jährige Laufzeit ist in Ordnung.",
+      "1": "Ja, die Laufzeit soll maximal 5 Jahre betragen.",
+      "2": "Ja, die Laufzeit soll maximal 3 Jahre betragen."
+    }
+  },
+  {
+    "field_name": "glas",
+    "field_title": "Soll auf Glasbruch-Versicherung für Glas außerhalb der Wohnung verzichtet werden? (z.B. Terrassenverglasung, Eingangsbereich)",
+    "field_type": "integer",
+    "required": false,
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
+  },
+  {
+    "field_name": "zweitwohnsitz",
+    "field_title": "Handelt es sich beim Wohnsitz um einen Zweitwohnsitz?",
+    "field_type": "integer",
+    "required": false,
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
+  },
+  {
+    "field_name": "wohntyp",
+    "field_title": "Was ist die aktuelle Wohnsituation des Versicherungsnehmers?",
+    "field_type": "integer",
+    "required": false,
+    "options": {
+      "0": "Single-/Einpersonenhaushalt",
+      "1": "In Wohngemeinschaft",
+      "2": "Mit Partner oder Familie"
+    }
+  },
+  {
+    "field_name": "regionalrabatt",
+    "field_title": "Bundesland des Wohnsitzes (Regionalrabatt)",
+    "field_type": "string",
+    "options": {
+      "wien": "Wien",
+      "niederoesterreich": "Niederösterreich",
+      "steiermark": "Steiermark",
+      "burgenland": "Burgenland",
+      "oberoesterreich": "Oberösterreich",
+      "kaernten": "Kärnten",
+      "salzburg": "Salzburg",
+      "tirol": "Tirol",
+      "vorarlberg": "Vorarlberg"
+    }
+  },
+  {
+    "field_name": "geldwerte",
+    "field_title": "Maximale Entschädigung für gestohlene, unversperrte (kein Safe) Geldeswerte und Einlagebücher von 2.500 Euro auf 4.500 Euro erhöhen?",
+    "field_type": "integer",
+    "required": false,
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
+  },
+  {
+    "field_name": "wertgegenstaende",
+    "field_title": "Maximale Entschädigung für gestohlenen, unversperrten (kein Safe) Schmuck, Edelsteine/-metalle oder Briefmarken- und Münzsammlungen von 15.000 Euro auf 25.000 Euro erhöhen?",
+    "field_type": "integer",
+    "required": false,
+    "options": {
+      "0": "Nein",
+      "1": "Ja"
+    }
+  },
+  {
+    "field_name": "alter",
+    "field_title": "Wie alt ist der Versicherungsnehmer?",
+    "field_type": "number"
+  },
+  {
+    "field_name": "vs",
+    "field_title": "Individuelle Versicherungssumme",
+    "field_type": "number",
+    "required": false
+  },
+  {
+    "field_name": "hhv_zonenfaktor",
+    "field_title": "Hochwasserzone",
+    "field_type": "integer",
+    "options": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  }
+]
