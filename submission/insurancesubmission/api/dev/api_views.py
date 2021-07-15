@@ -219,6 +219,33 @@ class ChangeInsuranceSubmissionDetails(generics.GenericAPIView):
         )
 
 
+class ChangeInsuranceSubmissionDesign(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_submission(self, pk, user):
+        try:
+            submissions = InsuranceSubmission.objects.get(pk=pk, submitter=user)
+            return submissions
+        except InsuranceSubmission.DoesNotExist:
+            raise exceptions.ValidationError(
+                {'detail': 'InsuranceSubmission does not exist.'})
+
+    def put(self, request, pk, *args, **kwargs):
+        submission = self.get_submission(pk=pk, user=request.user)
+
+        color = request.data.get('color')
+
+        if color is not None:
+            submission.color = color
+
+        title = request.data.get('title')
+
+        if title is not None:
+            submission.title = title
+
+        submission.save()
+
+
 class AddTemplateDocument(generics.GenericAPIView):
     permission_classes = [permissions.IsAdminUser]
 

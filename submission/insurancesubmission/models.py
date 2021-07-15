@@ -85,6 +85,9 @@ class InsuranceSubmission(models.Model):
     zipcode = models.CharField(max_length=255, blank=True, null=True)
     city = models.CharField(max_length=255, blank=True, null=True)
 
+    color = models.CharField(max_length=255, blank=True, null=True)
+    title = models.CharField(max_length=255, blank=True, null=True)
+
     # Data contains the submission data which each field represented through a
     # dictionary with the keys 'field_name', 'field_title' and 'field_content'.
     data = models.TextField()

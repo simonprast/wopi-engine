@@ -43,6 +43,9 @@ urlpatterns = [
 
     # PUT - change an insurance submission's details
     path('<int:pk>/change/', api_views.ChangeInsuranceSubmissionDetails.as_view()),
+
+    # PUT - change an insurance submission's design
+    path('<int:pk>/design/', api_views.ChangeInsuranceSubmissionDesign.as_view()),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
