@@ -276,12 +276,18 @@ class AddPhoneNumber(generics.GenericAPIView):
                 return Response({'phone_number_already_exists': 'User with this phone number already exists.'},
                                 status=status.HTTP_400_BAD_REQUEST)
 
+            channel = request.data.get('channel')
+            if not channel:
+                channel = 'sms'
+            elif channel not in ['sms', 'call']:
+                channel = 'sms'
+
             user = request.user
             print(user.email)
             user.phone = formatted_number
             user.phone_verified = False
             user.save()
-            send_code(formatted_number)
+            send_code(formatted_number, channel)
             return Response({'ok': 'ok'})
         else:
             raise exceptions.ValidationError('Field \'phone_number\' is required.')

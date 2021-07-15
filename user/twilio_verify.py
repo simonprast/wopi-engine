@@ -1,7 +1,7 @@
 from django.conf import settings
 
 
-def send_code(number):
+def send_code(number, channel):
     # Import TWILIO_CLIENT from settings.
     client = settings.TWILIO_CLIENT
 
@@ -9,7 +9,7 @@ def send_code(number):
     verification = client.verify \
         .services(settings.TWILIO_SERVICE_ID) \
         .verifications \
-        .create(to=number, channel='sms')
+        .create(to=number, channel=channel)
 
     print(verification)
 
